@@ -123,6 +123,38 @@ later phase — they matter most for mutating surfaces, which don't exist yet.)
 
 ---
 
+## 2b. Outbound self-registration (implemented)
+
+The **first outbound call** in the codebase. On server start, a deployment
+announces itself to Agency OS — the beginning of the "outbound-first" model in
+§4. Lives in `src/lib/agency/registration`; triggered by the Next.js
+`instrumentation` hook (`src/instrumentation.ts`).
+
+- **Endpoint (outbound):** `POST {AGENCY_OS_BASE_URL}{AGENCY_OS_REGISTER_PATH}`
+  (default path `/api/v1/deployments/register`).
+- **Auth (outbound):** `Authorization: Bearer <AGENCY_OUTBOUND_API_KEY>` — a
+  server-only secret Business OS presents to Agency OS (distinct from the inbound
+  key in §2a). Plus `x-idempotency-key`, `x-business-os-deployment`, and
+  `x-business-os-contract` headers.
+- **Payload:** deployment identity, organization identity, version info, and the
+  capability descriptor — composed from the connector primitives. **No customer
+  data.**
+- **Idempotent:** skipped when disabled/unconfigured or already registered with
+  an unchanged payload (fingerprint hash); concurrent calls share one attempt.
+- **Retryable:** transient failures (network/timeout/5xx/429) back off and retry
+  (exponential + jitter, bounded); terminal 4xx (e.g. bad key) fail fast.
+- **Non-blocking & fail-safe:** fire-and-forget, never awaited, never throws.
+  Registration failure never delays or prevents startup; Business OS runs
+  normally regardless.
+- **State:** an in-process lifecycle (`idle → skipped | registering → registered
+  | failed`); not persisted (Agency OS owns cross-restart idempotency via the
+  idempotency key). See `DECISIONS.md` ADR-0012.
+
+Not included (by design this phase): monitoring, polling, synchronization,
+inbound commands, deployment automation, version updates.
+
+---
+
 ## 3. Authentication & authorization
 
 - **Auth:** Supabase Auth via `@supabase/ssr`. Sessions are refreshed in
@@ -146,10 +178,11 @@ never Agency OS internals.
 
 ### Direction & shape (intended)
 
-- **Outbound-first.** On meaningful events (new lead, quote requested, review
-  submitted, etc.), the client instance **emits an authenticated webhook / API
-  call** to the Agency OS. Emission happens through the services layer so the
-  rest of the app stays unaware of it.
+- **Outbound-first.** Self-registration on startup is **implemented** (§2b) —
+  the first outbound call. The next step is emitting authenticated events (new
+  lead, quote requested, review submitted, etc.) to the Agency OS; that emission
+  will happen through the services layer so the rest of the app stays unaware of
+  it. (Event publishing is not yet built.)
 - **Inbound receiver.** A future authenticated route handler under `app/api/`
   (e.g. `app/api/agency/v1/webhooks/route.ts`) would accept Agency OS callbacks.
   It validates a signature, parses the payload with Zod, and applies changes

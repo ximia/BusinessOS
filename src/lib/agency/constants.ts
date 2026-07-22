@@ -55,4 +55,15 @@ export const ENV = {
    * `ConnectorConfig`, so it can never leak through the connector's surface.
    */
   INBOUND_API_KEY: "AGENCY_INBOUND_API_KEY",
+  /**
+   * Shared secret Business OS presents to Agency OS when registering itself
+   * (Phase 3, outbound). Server-only; read ONLY by the registration module and
+   * never placed into `ConnectorConfig`.
+   */
+  OUTBOUND_API_KEY: "AGENCY_OUTBOUND_API_KEY",
+  /**
+   * Optional override for the Agency OS registration endpoint path. Defaults to
+   * `DEFAULT_REGISTER_PATH` in the registration config.
+   */
+  REGISTER_PATH: "AGENCY_OS_REGISTER_PATH",
 } as const;

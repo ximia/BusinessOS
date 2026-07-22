@@ -30,6 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when the connector is off. Auth via per-deployment `AGENCY_INBOUND_API_KEY`
   (bearer token, constant-time compare). No registration, commands, sync, or
   polling.
+- **Agency self-registration (Phase 3, outbound).**
+  `src/lib/agency/registration` — on server start (via `src/instrumentation.ts`)
+  the deployment announces itself to Agency OS with an idempotent, retryable,
+  **fire-and-forget** `POST`. Never awaited, never throws; registration failure
+  never delays or prevents startup and Business OS runs normally. Composes
+  connector identity/version/capabilities into the payload (no customer data);
+  authenticates with `AGENCY_OUTBOUND_API_KEY`. Skipped entirely when the
+  connector is disabled/unconfigured. No monitoring, polling, synchronization,
+  commands, deployment automation, or version updates.
 
 ### Changed
 - **Product direction:** repositioned from "multi-industry website + admin

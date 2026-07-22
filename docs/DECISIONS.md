@@ -10,6 +10,42 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0012 — Outbound self-registration is fire-and-forget, retryable, and startup-triggered
+**Status:** Accepted · 2026-07
+
+**Decision:** Business OS registers itself with Agency OS via a single outbound
+`POST` on server start, wired through the Next.js `instrumentation` hook. The
+call is **fire-and-forget** (never awaited, never throws), **idempotent** (skips
+when disabled/unconfigured or already registered with an unchanged payload
+fingerprint; concurrent calls share one in-flight attempt), and **retryable**
+(exponential backoff + jitter on transient failures; fast-fail on terminal 4xx).
+Registration **state is in-memory**, per process.
+
+**Context:** This is the first outbound dependency direction (Business OS →
+Agency OS). The prime invariant is that Business OS must never depend on Agency
+OS: registration cannot delay or prevent startup, and its failure must leave the
+app fully operational. The Next `instrumentation` hook runs once at startup and
+is the idiomatic place for this; but since Next awaits the hook, the hook must
+only *kick off* registration (synchronously) and not await the network.
+
+**Why in-memory state (not persisted):** persisting registration state would
+require a machine write-context under RLS — the unresolved problem in ADR-0011 —
+and true cross-restart idempotency belongs to the Agency OS endpoint anyway
+(upsert by deployment id + idempotency key). Re-announcing once per cold start is
+safe and cheap. A persistent backend can be added behind the state module later.
+
+**Consequences:** Registration is opt-in (enabled + base URL + deployment id +
+outbound key), carries no customer data, and uses a dedicated outbound secret
+distinct from the inbound API key. On serverless, background retries may be cut
+short by the platform after the response — acceptable for best-effort
+registration (a later phase may add a durable trigger). Explicitly excluded this
+phase: monitoring, polling, synchronization, inbound commands, deployment
+automation, version updates. Payload fingerprinting uses a plain, dependency-free
+hash (not `node:crypto`) so the registration module stays Edge-bundle-safe when
+pulled in through the instrumentation hook.
+
+---
+
 ## ADR-0011 — Agency API reads through the services layer under RLS; no elevated read context yet
 **Status:** Accepted (with a known, deferred limitation) · 2026-07
 

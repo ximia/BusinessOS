@@ -38,6 +38,8 @@ it did before this code existed.
 | `services/capabilities.service.ts` | Module + integration capability descriptor. |
 | `services/metrics.service.ts` | Aggregate-only metrics (Phase 2); composes existing business services. |
 | `api/` | Read-only Agency API layer (Phase 2): `auth`, `response`, `handler`, `schema`. |
+| `log.ts` | Scoped `[agency:<scope>]` logger (no secrets/PII). |
+| `registration/` | Outbound self-registration (Phase 3): `config`, `payload`, `client`, `retry`, `state`, orchestrator. |
 
 ### Phase 2 — read-only Agency API (implemented)
 
@@ -48,6 +50,24 @@ aggregates only** (never customer data / PII), validate every response, and
 return `503 disabled` when the connector is off. Auth is a per-deployment bearer
 key (`AGENCY_INBOUND_API_KEY`). Still no registration, commands, sync, polling,
 or outbound calls. See `docs/API.md` §2a.
+
+### Phase 3 — outbound self-registration (implemented)
+
+On server start, `src/instrumentation.ts` fires `ensureRegistered()` — a
+**fire-and-forget** `POST` announcing this deployment to Agency OS. It is
+**idempotent** (skips when disabled/unconfigured or already registered with an
+unchanged payload; concurrent calls share one attempt), **retryable** (exponential
+backoff + jitter on transient failures; fast-fail on terminal 4xx), and
+**non-blocking** (never awaited, never throws — a failure leaves Business OS
+running normally). The payload carries connector identity/version/capabilities
+only (**no customer data**) and authenticates with `AGENCY_OUTBOUND_API_KEY`.
+State is in-memory (`idle → skipped | registering → registered | failed`). No
+monitoring, polling, synchronization, commands, deployment automation, or version
+updates. See `docs/API.md` §2b and `docs/DECISIONS.md` ADR-0012.
+
+**Registration env vars:** `AGENCY_OUTBOUND_API_KEY` (required to register),
+`AGENCY_OS_REGISTER_PATH` (optional path override). Registration also requires
+`AGENCY_OS_ENABLED=true`, `AGENCY_OS_BASE_URL`, and `BUSINESS_OS_DEPLOYMENT_ID`.
 
 ## Configuration (all optional; unset ⇒ dormant + standalone)
 
