@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
-import { siteConfig } from "@/config";
+import { siteConfig, isMultiLocation } from "@/config";
 import type { SiteConfig } from "@/types/content";
 import { Logo } from "@/components/shared/logo";
 import { SocialIcons } from "@/components/shared/social-icons";
@@ -32,6 +32,17 @@ export function Footer({ settings = siteConfig }: { settings?: SiteConfig }) {
             <div key={col.title}>
               <h3 className="text-sm font-semibold">{col.title}</h3>
               <ul className="mt-4 space-y-3">
+                {/* Surface the /locations hub in the Company column when multi-location. */}
+                {isMultiLocation() && /company/i.test(col.title) && (
+                  <li>
+                    <Link
+                      href="/locations"
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Locations
+                    </Link>
+                  </li>
+                )}
                 {col.links.map((link) => (
                   <li key={link.href}>
                     <Link

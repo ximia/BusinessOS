@@ -123,6 +123,38 @@ export interface ServiceArea {
   note?: string;
 }
 
+/**
+ * A physical business location (Multi-location). Single-location businesses can
+ * ignore this entirely; when more than one is configured, the site exposes a
+ * /locations hub and per-location landing pages with their own address, hours,
+ * phone, map, and reviews.
+ */
+export interface Location {
+  /** URL slug: /locations/[slug] */
+  slug: string;
+  /** Display name, e.g. "Portland (HQ)". */
+  name: string;
+  /** Marks the primary/head-office location. */
+  primary?: boolean;
+  address: Address;
+  phone: string;
+  /** E.164 for tel: links. */
+  phoneRaw: string;
+  email?: string;
+  hours: BusinessHours[];
+  /** Google Maps embed URL for this location. */
+  mapEmbedUrl?: string;
+  /** Short tagline / note shown on the location card and page. */
+  note?: string;
+  /** Areas served from this location, for the landing copy. */
+  serviceAreas?: string[];
+  /**
+   * Optional filter: only show reviews whose `service` is in this list on the
+   * location page. When omitted, featured reviews are shown.
+   */
+  reviewServices?: string[];
+}
+
 export interface BlogPost {
   slug: string;
   title: string;

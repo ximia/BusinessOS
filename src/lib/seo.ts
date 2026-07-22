@@ -99,6 +99,44 @@ export function localBusinessJsonLd(
   };
 }
 
+/** JSON-LD LocalBusiness for a single physical location (Multi-location). */
+export function locationJsonLd(location: import("@/types/content").Location) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: `${siteConfig.companyName} — ${location.name}`,
+    description: siteConfig.description,
+    url: absoluteUrl(`/locations/${location.slug}`),
+    telephone: location.phoneRaw,
+    email: location.email ?? siteConfig.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: location.address.street,
+      addressLocality: location.address.city,
+      addressRegion: location.address.state,
+      postalCode: location.address.zip,
+      addressCountry: location.address.country,
+    },
+    geo:
+      location.address.lat && location.address.lng
+        ? {
+            "@type": "GeoCoordinates",
+            latitude: location.address.lat,
+            longitude: location.address.lng,
+          }
+        : undefined,
+    areaServed: location.serviceAreas ?? siteConfig.serviceAreas.map((a) => a.name),
+    parentOrganization: { "@type": "Organization", name: siteConfig.companyName },
+    openingHoursSpecification: location.hours
+      .filter((h) => !/closed/i.test(h.hours))
+      .map((h) => ({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: h.day,
+        description: h.hours,
+      })),
+  };
+}
+
 /** JSON-LD for a single service. Pass `areaServed` to scope it to a city. */
 export function serviceJsonLd(
   name: string,

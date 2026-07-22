@@ -178,6 +178,22 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   Build stays green with no key (provider only constructs the client at runtime).
   NOTE: adding a generator = update `generators.ts` only.
 
+### Multi-location (Priority 10)
+- `config/locations.config.ts` — `Location[]` (each: address, phone, hours,
+  map, note, serviceAreas, optional `reviewServices` filter) + helpers
+  `isMultiLocation()`, `getLocationBySlug`, `getPrimaryLocation`. First entry
+  mirrors `siteConfig.address`; add entries to turn the feature on. Barrel-
+  exported from `@/config`. `Location` type in `types/content.ts`.
+- Routes (SSG): `app/(marketing)/locations/page.tsx` (hub) +
+  `locations/[slug]/page.tsx` (per-location address/hours/map/CTA + filtered
+  reviews + cross-links). Unknown slugs 404.
+- SEO: `locationJsonLd()` in `lib/seo.ts` (per-location LocalBusiness +
+  BreadcrumbList, in initial HTML); `sitemap.ts` adds the hub + each location
+  ONLY when `isMultiLocation()`.
+- Surfacing: `layout/footer.tsx` injects a "Locations" link into the Company
+  column when multi-location. Single-location clones: leave one entry and the
+  feature stays dormant (no hub link, no sitemap entries).
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -208,16 +224,17 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P8** AI tools — provider-abstracted content generators (service copy, FAQs,
   blog, meta, local landing copy, alt text, review replies) via the Anthropic
   Claude SDK, with templated demo output when no key is set.
+- **P10** Multi-location — config-driven per-location address/hours/phone/map/
+  reviews + /locations hub and landing pages (SSG), per-location LocalBusiness
+  schema, sitemap, and a conditional footer link.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-10. **Multi-location** — per-location address/hours/phone/map/reviews/landing.
-6. **Client portal** — quotes approve, documents, appointments, invoices,
-   messages, profile (payments-ready).
 11. **White-label / multi-tenancy** — orgs, custom domains, roles, separate
    storage (build on `org_id`).
+6. ~~**Client portal**~~ — descoped by the owner (not wanted).
 - Ongoing per feature: UI polish, a11y, perf (target 95+ Lighthouse), remove the
   staged "wire-up" TODOs (admin writes, uploads, notifications, CSV import).
 
@@ -230,5 +247,6 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 10 (Multi-location — per-location address/hours/phone/map/reviews/
-> landing pages). Keep the build green and preserve existing functionality."
+> Priority 11 (White-label / multi-tenancy — orgs, roles, custom domains,
+> tenant-scoped storage on `org_id`). The client portal is descoped. Keep the
+> build green and preserve existing functionality."

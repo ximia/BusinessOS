@@ -17,3 +17,9 @@ export { galleryItems, getGalleryCategories } from "./gallery.config";
 export { team } from "./team.config";
 export { blogPosts, getPostBySlug, getBlogCategories } from "./blog.config";
 export { jobOpenings, getJobBySlug } from "./careers.config";
+export {
+  locations,
+  isMultiLocation,
+  getLocationBySlug,
+  getPrimaryLocation,
+} from "./locations.config";

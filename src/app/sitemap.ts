@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { services, blogPosts, jobOpenings } from "@/config";
+import { services, blogPosts, jobOpenings, locations, isMultiLocation } from "@/config";
 import { absoluteUrl } from "@/lib/utils";
 import { areas } from "@/features/local-seo/local-seo";
 
@@ -61,6 +61,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }))
   );
 
+  // Multi-location: hub + per-location pages (only when more than one).
+  const locationRoutes = isMultiLocation()
+    ? [
+        {
+          url: absoluteUrl("/locations"),
+          lastModified: new Date(),
+          changeFrequency: "monthly" as const,
+          priority: 0.7,
+        },
+        ...locations.map((l) => ({
+          url: absoluteUrl(`/locations/${l.slug}`),
+          lastModified: new Date(),
+          changeFrequency: "monthly" as const,
+          priority: 0.7,
+        })),
+      ]
+    : [];
+
   return [
     ...staticRoutes,
     ...serviceRoutes,
@@ -68,5 +86,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...careerRoutes,
     ...cityRoutes,
     ...cityServiceRoutes,
+    ...locationRoutes,
   ];
 }
