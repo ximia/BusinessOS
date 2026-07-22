@@ -35,6 +35,7 @@ export interface Lead {
   assigned_to: string | null;
   tags: string[];
   value: number | null;
+  archived: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +70,39 @@ export interface FollowUp {
   due_at: string;
   note: string;
   completed: boolean;
+  created_at: string;
+}
+
+/**
+ * A unified activity-feed entry for a lead's timeline, derived from notes,
+ * call logs, follow-ups, and synthesized lifecycle events (created / status).
+ * The `at` field is the ISO timestamp the feed is sorted by.
+ */
+export type LeadActivity =
+  | { kind: "created"; id: string; at: string; source: LeadSource }
+  | { kind: "note"; id: string; at: string; author: string; body: string }
+  | {
+      kind: "call";
+      id: string;
+      at: string;
+      outcome: CallOutcome;
+      durationSeconds: number | null;
+      notes: string | null;
+    }
+  | {
+      kind: "follow_up";
+      id: string;
+      at: string;
+      dueAt: string;
+      note: string;
+      completed: boolean;
+    };
+
+/** All activity for a single lead, loaded for the detail drawer. */
+export interface LeadDetail {
+  notes: LeadNote[];
+  calls: CallLog[];
+  followUps: FollowUp[];
 }
 
 export type QuoteStatus =

@@ -1,5 +1,8 @@
 import type {
   Lead,
+  LeadNote,
+  CallLog,
+  FollowUp,
   QuoteRequest,
   Review,
   GalleryImage,
@@ -30,6 +33,7 @@ export const mockLeads: Lead[] = [
     assigned_to: "Elena Ruiz",
     tags: ["paint-correction", "tesla"],
     value: 549,
+    archived: false,
     created_at: hours(2),
     updated_at: hours(2),
   },
@@ -44,6 +48,7 @@ export const mockLeads: Lead[] = [
     assigned_to: "Jordan Pierce",
     tags: ["interior"],
     value: 219,
+    archived: false,
     created_at: days(1),
     updated_at: hours(5),
   },
@@ -58,6 +63,7 @@ export const mockLeads: Lead[] = [
     assigned_to: "Sam Okafor",
     tags: ["ceramic", "high-value"],
     value: 1250,
+    archived: false,
     created_at: days(3),
     updated_at: days(1),
   },
@@ -72,6 +78,7 @@ export const mockLeads: Lead[] = [
     assigned_to: "Elena Ruiz",
     tags: ["recurring"],
     value: 79,
+    archived: false,
     created_at: days(6),
     updated_at: days(4),
   },
@@ -86,6 +93,7 @@ export const mockLeads: Lead[] = [
     assigned_to: null,
     tags: ["exterior", "truck"],
     value: 389,
+    archived: false,
     created_at: days(2),
     updated_at: days(2),
   },
@@ -100,6 +108,7 @@ export const mockLeads: Lead[] = [
     assigned_to: "Sam Okafor",
     tags: [],
     value: null,
+    archived: true,
     created_at: days(9),
     updated_at: days(7),
   },
@@ -284,5 +293,87 @@ export const mockEmployees: Employee[] = [
     avatar_url: null,
     active: false,
     created_at: days(120),
+  },
+];
+
+/**
+ * Demo CRM activity — notes, call logs, and follow-ups per lead. Keyed by the
+ * mock lead ids above so the lead drawer's timeline is populated in demo mode.
+ */
+export const mockLeadNotes: LeadNote[] = [
+  {
+    id: "ln_01",
+    lead_id: "ld_01",
+    author: "Elena Ruiz",
+    body: "Left a voicemail introducing the paint-correction package. Will follow up tomorrow.",
+    created_at: hours(1),
+  },
+  {
+    id: "ln_02",
+    lead_id: "ld_02",
+    author: "Jordan Pierce",
+    body: "Confirmed she wants the full interior + pet-hair removal. Sending a quote.",
+    created_at: hours(4),
+  },
+  {
+    id: "ln_03",
+    lead_id: "ld_03",
+    author: "Sam Okafor",
+    body: "Quoted the 5-year ceramic at $1,250. He's comparing with one other shop.",
+    created_at: days(1),
+  },
+];
+
+export const mockCallLogs: CallLog[] = [
+  {
+    id: "cl_01",
+    lead_id: "ld_01",
+    outcome: "voicemail",
+    duration_seconds: null,
+    notes: "No answer — left a message.",
+    created_at: hours(1),
+  },
+  {
+    id: "cl_02",
+    lead_id: "ld_02",
+    outcome: "connected",
+    duration_seconds: 420,
+    notes: "Walked through scheduling. Prefers a weekend morning.",
+    created_at: hours(5),
+  },
+  {
+    id: "cl_03",
+    lead_id: "ld_03",
+    outcome: "connected",
+    duration_seconds: 660,
+    notes: "Discussed coating longevity and maintenance plan.",
+    created_at: days(2),
+  },
+];
+
+export const mockFollowUps: FollowUp[] = [
+  {
+    id: "fu_01",
+    lead_id: "ld_01",
+    due_at: hours(-20),
+    note: "Call back about the paint-correction estimate.",
+    completed: false,
+    created_at: hours(2),
+  },
+  {
+    id: "fu_02",
+    lead_id: "ld_03",
+    due_at: days(-2),
+    note: "Check whether he decided on the ceramic coating.",
+    completed: false,
+    created_at: days(1),
+  },
+  {
+    id: "fu_03",
+    lead_id: "ld_02",
+    due_at: hours(6),
+    note: "Send the interior detail quote.",
+    completed: true,
+    created_at: hours(6),
   },
 ];

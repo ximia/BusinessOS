@@ -77,6 +77,28 @@ Motion 11 · Supabase (`@supabase/ssr`) · React Hook Form + Zod · Lucide.
 `components/shared/{announcement-bar,sticky-mobile-cta,floating-call-button}.tsx`
 — all gated by settings flags, wired in the marketing layout.
 
+### CRM expansion (Priority 4)
+Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables.
+- `server/actions/leads.ts` — auth-guarded write-actions (demo-safe no-ops):
+  `updateLead`, `bulkUpdateLeads`, `addLeadNote`/`deleteLeadNote`, `logCall`,
+  `scheduleFollowUp`/`setFollowUpCompleted`/`deleteFollowUp`. Each returns
+  `{ ok, message, id? }` and revalidates `/admin/leads` + `/admin`.
+- `lib/leads.ts` — client-safe pure helpers: `findDuplicateLeadIds`,
+  `buildLeadTimeline`, `isOverdue`, `formatDuration`.
+- `services/leads.service.ts` — richer `LeadFilters` (source/tag/archived),
+  `getLeadNotesByLead`/`getCallLogsByLead`/`getFollowUpsByLead` (grouped),
+  `getLeadDetail`, `getOpenFollowUps`; `getLeadStats` gained
+  `openFollowUps`/`overdueFollowUps`.
+- `components/admin/leads-table.tsx` — bulk select + bulk action bar
+  (status/assign/archive/export), advanced filters (status/source/assignee/tag),
+  active/archived views, duplicate flags, a follow-up reminders panel, and a
+  tabbed drawer (Overview + Activity timeline) with note/call/follow-up quick
+  actions and tag/value editors. Mutations are optimistic with rollback.
+- `components/ui/checkbox.tsx` — new dependency-free checkbox primitive.
+- Migration `supabase/migrations/0003_crm_expansion.sql` — adds `leads.archived`
+  + activity-lookup indexes. Client keeps optimistic state; actions persist when
+  Supabase is configured.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -89,15 +111,14 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
   dynamic OG), a11y, dark mode.
 - **P1** Business Settings system + admin editor.
 - **P3** Theme/Industry Generator.
+- **P4** CRM expansion (notes/comments, call logs, follow-up tasks + reminders,
+  tags, pipeline stages, bulk actions, advanced filters, duplicate detection,
+  archived leads, activity timeline) + write-actions.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-4. **CRM expansion** — lead timeline, activity feed, tasks, follow-up reminders,
-   call logs, internal comments, tags, pipeline stages, bulk actions, advanced
-   filters, duplicate detection, archived leads. (Tables `lead_notes`,
-   `call_logs`, `follow_ups` already exist; build UI + admin write-actions.)
 5. **Analytics dashboard** redesign (Stripe/Linear): today's leads, conversion
    rate, visitors, calls, quotes, appointments, revenue placeholder, activity,
    charts, popular services, traffic sources.
@@ -126,5 +147,5 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 4 (CRM expansion). Keep the build green and preserve existing
-> functionality."
+> Priority 5 (Analytics dashboard redesign). Keep the build green and preserve
+> existing functionality."
