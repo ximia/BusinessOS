@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/footer";
 import { FloatingCallButton } from "@/components/shared/floating-call-button";
 import { SettingsProvider } from "@/features/settings/settings-provider";
 import { getSiteConfig } from "@/features/settings/settings.service";
+import { BrandStyle } from "@/features/theme/brand-style";
 
 export default async function MarketingLayout({
   children,
@@ -14,6 +15,7 @@ export default async function MarketingLayout({
 
   return (
     <SettingsProvider settings={settings}>
+      <BrandStyle theme={settings.theme} />
       <div className="flex min-h-screen flex-col">
         <Navbar />
         <main id="main" className="flex-1">

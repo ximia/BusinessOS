@@ -72,6 +72,10 @@ export function SettingsEditor({
       .split("\n")
       .map((b) => b.trim())
       .filter(Boolean);
+    // Preserve fields managed elsewhere (Theme studio) so a settings save never
+    // drops them.
+    values.theme = values.theme ?? initial.theme;
+    values.features = values.features ?? initial.features;
 
     const res = await updateBusinessSettings(values);
     if (res.ok) {

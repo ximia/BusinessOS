@@ -190,6 +190,8 @@ export interface SiteConfig {
    * configurable from here (and, at runtime, from the Business Settings admin).
    */
   features?: SiteFeatures;
+  /** Optional runtime brand theme (industry preset or custom colors). */
+  theme?: BrandTheme;
 }
 
 export interface SiteFeatures {
@@ -197,4 +199,18 @@ export interface SiteFeatures {
   floatingCallButton?: boolean;
   /** Show a sticky "Get a quote" bar on mobile once the user scrolls. */
   stickyMobileCta?: boolean;
+}
+
+/**
+ * Runtime brand theme. Overrides the CSS-variable defaults in globals.css so an
+ * industry preset (or custom color) can re-skin the site without a rebuild.
+ * Color values are HSL triples, e.g. "216 90% 44%".
+ */
+export interface BrandTheme {
+  /** Industry preset id, or "custom". */
+  preset: string;
+  /** Primary accent for light mode. */
+  primary: string;
+  /** Primary accent for dark mode. */
+  primaryDark: string;
 }

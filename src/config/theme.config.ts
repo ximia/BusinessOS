@@ -19,6 +19,12 @@ export const themeConfig = {
   /** Used for the browser theme-color meta tag (light mode). */
   themeColorLight: "#ffffff",
   themeColorDark: "#0a0a0b",
+  /**
+   * Default brand accent (HSL triples), mirroring `--primary` in globals.css.
+   * The Theme Generator overrides these at runtime via BrandStyle.
+   */
+  primary: "216 90% 44%",
+  primaryDark: "214 95% 62%",
   /** Default corner radius, mirrors --radius in globals.css. */
   radius: "0.75rem",
   /** Whether to expose the light/dark toggle in the UI. */

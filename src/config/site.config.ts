@@ -149,4 +149,11 @@ export const siteConfig: SiteConfig = {
     floatingCallButton: true,
     stickyMobileCta: true,
   },
+
+  // Runtime brand theme. Change from Admin → Theme (industry presets).
+  theme: {
+    preset: "auto-detailing",
+    primary: "216 90% 44%",
+    primaryDark: "214 95% 62%",
+  },
 };

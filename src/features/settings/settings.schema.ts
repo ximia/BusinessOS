@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { SiteConfig } from "@/types/content";
+import { themeConfig } from "@/config/theme.config";
 
 /**
  * Business Settings — the editable subset of {@link SiteConfig} that a
@@ -74,6 +75,12 @@ export const businessSettingsSchema = z.object({
     floatingCallButton: z.boolean(),
     stickyMobileCta: z.boolean(),
   }),
+
+  theme: z.object({
+    preset: z.string().max(60),
+    primary: z.string().max(30),
+    primaryDark: z.string().max(30),
+  }),
 });
 
 export type BusinessSettings = z.infer<typeof businessSettingsSchema>;
@@ -113,6 +120,11 @@ export function settingsFromConfig(config: SiteConfig): BusinessSettings {
     features: {
       floatingCallButton: config.features?.floatingCallButton ?? false,
       stickyMobileCta: config.features?.stickyMobileCta ?? false,
+    },
+    theme: {
+      preset: config.theme?.preset ?? "custom",
+      primary: config.theme?.primary ?? themeConfig.primary,
+      primaryDark: config.theme?.primaryDark ?? themeConfig.primaryDark,
     },
   };
 }
@@ -159,5 +171,6 @@ export function mergeSettings(
     seo: overrides.seo ? { ...base.seo, ...overrides.seo } : base.seo,
     trustBadges: overrides.trustBadges ?? base.trustBadges,
     features: { ...base.features, ...overrides.features },
+    theme: overrides.theme ?? base.theme,
   };
 }
