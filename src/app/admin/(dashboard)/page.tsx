@@ -1,10 +1,22 @@
 import Link from "next/link";
-import { Users, FileText, Star, TrendingUp, ArrowRight } from "lucide-react";
-import { getLeads, getLeadStats } from "@/services/leads.service";
-import { getQuotes } from "@/services/quotes.service";
-import { getReviews } from "@/services/reviews.service";
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  Target,
+  PhoneCall,
+  FileText,
+  CalendarClock,
+  Star,
+  ArrowRight,
+  Activity,
+} from "lucide-react";
+import { getDashboardAnalytics } from "@/services/analytics.service";
 import { StatCard } from "@/components/admin/stat-card";
 import { BarChart } from "@/components/admin/bar-chart";
+import { TrendChart } from "@/components/admin/trend-chart";
+import { ProgressList } from "@/components/admin/progress-list";
+import { ActivityFeed } from "@/components/admin/activity-feed";
 import { LeadStatusBadge } from "@/components/admin/status-badge";
 import {
   Table,
@@ -17,81 +29,149 @@ import {
 import { formatCurrency, timeAgo } from "@/lib/utils";
 
 export default async function AdminDashboard() {
-  const [stats, leads, quotes, reviews] = await Promise.all([
-    getLeadStats(),
-    getLeads(),
-    getQuotes(),
-    getReviews(),
-  ]);
+  const {
+    kpis,
+    leadsByStage,
+    dailyLeads,
+    trafficSources,
+    popularServices,
+    activity,
+    recentLeads,
+  } = await getDashboardAnalytics();
 
-  const pendingReviews = reviews.filter((r) => !r.approved).length;
-  const openQuotes = quotes.filter((q) =>
-    ["requested", "reviewing"].includes(q.status)
-  ).length;
-
-  const statusOrder = ["new", "contacted", "qualified", "quoted", "won", "lost"];
-  const chartData = statusOrder.map((s) => ({
-    label: s.slice(0, 3),
-    value: stats.byStatus[s] ?? 0,
-  }));
-
-  const recentLeads = leads.slice(0, 5);
+  const trend =
+    kpis.leadsWeekTrend == null
+      ? undefined
+      : {
+          value: `${kpis.leadsWeekTrend >= 0 ? "+" : ""}${kpis.leadsWeekTrend}% vs last week`,
+          positive: kpis.leadsWeekTrend >= 0,
+        };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
-      {/* Stats */}
+      <div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">
+          Overview
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Your pipeline, revenue, and activity at a glance.
+        </p>
+      </div>
+
+      {/* Primary KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total leads"
-          value={stats.total}
+          label="Leads today"
+          value={kpis.todayLeads}
           icon={Users}
-          hint={`${stats.newThisWeek} new this week`}
+          hint="Since midnight"
         />
         <StatCard
-          label="Open quotes"
-          value={openQuotes}
-          icon={FileText}
-          hint={`${quotes.length} total`}
-        />
-        <StatCard
-          label="Pipeline value"
-          value={formatCurrency(stats.pipelineValue)}
+          label="New this week"
+          value={kpis.leadsWeek}
           icon={TrendingUp}
-          hint="Excludes won & lost"
+          trend={trend}
+          hint={trend ? undefined : "vs last week"}
         />
         <StatCard
-          label="Pending reviews"
-          value={pendingReviews}
-          icon={Star}
-          hint="Awaiting approval"
+          label="Conversion rate"
+          value={`${kpis.conversionRate}%`}
+          icon={Target}
+          hint="Won of all leads"
+        />
+        <StatCard
+          label="Revenue won"
+          value={formatCurrency(kpis.wonValue)}
+          icon={DollarSign}
+          hint="Closed deals"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Chart */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm lg:col-span-2">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold">Leads by stage</h2>
-              <p className="text-sm text-muted-foreground">
-                Distribution across the pipeline
-              </p>
-            </div>
-          </div>
-          <BarChart data={chartData} />
-        </div>
+      {/* Secondary metrics strip */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border shadow-sm sm:grid-cols-3 lg:grid-cols-6">
+        <MiniStat icon={DollarSign} label="Pipeline" value={formatCurrency(kpis.pipelineValue)} />
+        <MiniStat icon={PhoneCall} label="Calls (7d)" value={kpis.callsWeek} />
+        <MiniStat
+          icon={FileText}
+          label="Open quotes"
+          value={kpis.openQuotes}
+          hint={`${kpis.quoteAcceptRate}% accepted`}
+        />
+        <MiniStat
+          icon={CalendarClock}
+          label="Follow-ups"
+          value={kpis.openFollowUps}
+          hint={kpis.overdueFollowUps ? `${kpis.overdueFollowUps} overdue` : "On track"}
+          alert={kpis.overdueFollowUps > 0}
+        />
+        <MiniStat icon={Star} label="Pending reviews" value={kpis.pendingReviews} />
+        <MiniStat
+          icon={Star}
+          label="Avg rating"
+          value={kpis.avgRating ? kpis.avgRating.toFixed(1) : "—"}
+        />
+      </div>
 
-        {/* Won value */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="font-semibold">Revenue won</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Closed deals</p>
-          <p className="mt-6 font-display text-4xl font-semibold tracking-tight text-success">
-            {formatCurrency(stats.wonValue)}
+      {/* Trend + revenue */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Panel
+          className="lg:col-span-2"
+          title="Leads over time"
+          subtitle="New enquiries, last 14 days"
+        >
+          <TrendChart data={dailyLeads} />
+        </Panel>
+        <Panel title="Revenue" subtitle="Closed & projected">
+          <p className="mt-2 font-display text-4xl font-semibold tracking-tight text-success">
+            {formatCurrency(kpis.wonValue)}
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {stats.byStatus.won ?? 0} deals closed
+          <p className="text-sm text-muted-foreground">Won to date</p>
+          <dl className="mt-6 space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">Open pipeline</dt>
+              <dd className="font-medium">{formatCurrency(kpis.pipelineValue)}</dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">
+                Projected
+                <span className="ml-1 text-xs">(weighted)</span>
+              </dt>
+              <dd className="font-medium">{formatCurrency(kpis.projectedRevenue)}</dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Projection = won + pipeline × conversion rate. Connect a payments
+            provider for actuals.
           </p>
-        </div>
+        </Panel>
+      </div>
+
+      {/* Pipeline + activity */}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Panel title="Leads by stage" subtitle="Distribution across the pipeline">
+          <BarChart data={leadsByStage} height={220} />
+        </Panel>
+        <Panel
+          title="Recent activity"
+          subtitle="Leads, calls, quotes & reviews"
+          icon={Activity}
+        >
+          <ActivityFeed items={activity} />
+        </Panel>
+      </div>
+
+      {/* Traffic + services */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="Traffic sources" subtitle="Where leads come from">
+          <ProgressList rows={trafficSources} empty="No leads yet" />
+          <p className="mt-4 text-xs text-muted-foreground">
+            Derived from lead source. Connect Google Analytics for full site
+            visitor traffic.
+          </p>
+        </Panel>
+        <Panel title="Popular services" subtitle="Most-requested work">
+          <ProgressList rows={popularServices} empty="No quotes or reviews yet" />
+        </Panel>
       </div>
 
       {/* Recent leads */}
@@ -143,6 +223,68 @@ export default async function AdminDashboard() {
           </TableBody>
         </Table>
       </div>
+    </div>
+  );
+}
+
+function Panel({
+  title,
+  subtitle,
+  icon: Icon,
+  className,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`rounded-xl border border-border bg-card p-6 shadow-sm ${className ?? ""}`}
+    >
+      <div className="mb-5 flex items-start justify-between">
+        <div>
+          <h2 className="font-semibold">{title}</h2>
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
+        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MiniStat({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  alert,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  hint?: string;
+  alert?: boolean;
+}) {
+  return (
+    <div className="bg-card p-4">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      <p className="mt-1.5 font-display text-xl font-semibold tracking-tight">
+        {value}
+      </p>
+      {hint && (
+        <p
+          className={`mt-0.5 text-xs ${alert ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

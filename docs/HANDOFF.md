@@ -99,6 +99,17 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   + activity-lookup indexes. Client keeps optimistic state; actions persist when
   Supabase is configured.
 
+### Analytics dashboard (Priority 5)
+- `services/analytics.service.ts` — `getDashboardAnalytics()` aggregates KPIs,
+  a 14-day daily-leads series, leads-by-stage, revenue (won + weighted
+  projection), traffic sources (lead-source mix), popular services (quote +
+  review intent), and a cross-entity activity feed. All derived from real
+  records, so it works in demo mode and against Supabase. Visitor/traffic
+  numbers are labelled placeholders until a web-analytics provider is wired.
+- Components: `components/admin/{trend-chart,progress-list,activity-feed}.tsx`
+  (all dependency-free; `trend-chart` is an SVG area sparkline with hover).
+  `app/admin/(dashboard)/page.tsx` is the redesigned Stripe/Linear layout.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -114,14 +125,14 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P4** CRM expansion (notes/comments, call logs, follow-up tasks + reminders,
   tags, pipeline stages, bulk actions, advanced filters, duplicate detection,
   archived leads, activity timeline) + write-actions.
+- **P5** Analytics dashboard redesign (Stripe/Linear): KPI + mini-metric tiles,
+  14-day leads trend chart, leads-by-stage, revenue (won + weighted projection),
+  cross-entity activity feed, traffic sources, popular services.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-5. **Analytics dashboard** redesign (Stripe/Linear): today's leads, conversion
-   rate, visitors, calls, quotes, appointments, revenue placeholder, activity,
-   charts, popular services, traffic sources.
 2. **Website Builder** — enable/disable/reorder/duplicate homepage sections
    (drag-drop), persist to settings; sections already modular in
    `components/sections/`.
@@ -147,5 +158,6 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 5 (Analytics dashboard redesign). Keep the build green and preserve
-> existing functionality."
+> Priority 2 (Website Builder — enable/disable/reorder/duplicate homepage
+> sections, persisted to settings). Keep the build green and preserve existing
+> functionality."
