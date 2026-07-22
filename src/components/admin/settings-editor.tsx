@@ -76,6 +76,7 @@ export function SettingsEditor({
     // drops them.
     values.theme = values.theme ?? initial.theme;
     values.features = values.features ?? initial.features;
+    values.announcement = values.announcement ?? initial.announcement;
 
     const res = await updateBusinessSettings(values);
     if (res.ok) {
@@ -293,11 +294,33 @@ export function SettingsEditor({
             />
             <Toggle
               label="Sticky mobile CTA"
-              description="Reserved for an upcoming sticky quote bar on mobile."
+              description="Show a call + quote bar fixed to the bottom on mobile."
               checked={watch("features.stickyMobileCta")}
               onChange={(v) => setValue("features.stickyMobileCta", v, { shouldDirty: true })}
             />
           </Card>
+
+          <div className="mt-5">
+            <Card>
+              <Toggle
+                label="Announcement bar"
+                description="A slim, dismissible bar above the navbar."
+                checked={watch("announcement.enabled")}
+                onChange={(v) => setValue("announcement.enabled", v, { shouldDirty: true })}
+              />
+              <Field label="Message" htmlFor="annMessage">
+                <Input id="annMessage" {...register("announcement.message")} />
+              </Field>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Link label" htmlFor="annLabel" hint="Optional">
+                  <Input id="annLabel" {...register("announcement.linkLabel")} />
+                </Field>
+                <Field label="Link URL" htmlFor="annHref" hint="Optional">
+                  <Input id="annHref" {...register("announcement.href")} placeholder="/contact" />
+                </Field>
+              </div>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </form>

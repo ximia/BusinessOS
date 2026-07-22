@@ -156,4 +156,12 @@ export const siteConfig: SiteConfig = {
     primary: "216 90% 44%",
     primaryDark: "214 95% 62%",
   },
+
+  // Optional announcement bar (Admin → Settings → Features).
+  announcement: {
+    enabled: true,
+    message: "Now booking — same-week appointments usually available.",
+    href: "/contact",
+    linkLabel: "Reserve a spot",
+  },
 };

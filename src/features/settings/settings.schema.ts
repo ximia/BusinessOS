@@ -81,6 +81,13 @@ export const businessSettingsSchema = z.object({
     primary: z.string().max(30),
     primaryDark: z.string().max(30),
   }),
+
+  announcement: z.object({
+    enabled: z.boolean(),
+    message: z.string().max(160),
+    href: z.string().max(300).optional().or(z.literal("")),
+    linkLabel: z.string().max(40).optional().or(z.literal("")),
+  }),
 });
 
 export type BusinessSettings = z.infer<typeof businessSettingsSchema>;
@@ -125,6 +132,12 @@ export function settingsFromConfig(config: SiteConfig): BusinessSettings {
       preset: config.theme?.preset ?? "custom",
       primary: config.theme?.primary ?? themeConfig.primary,
       primaryDark: config.theme?.primaryDark ?? themeConfig.primaryDark,
+    },
+    announcement: {
+      enabled: config.announcement?.enabled ?? false,
+      message: config.announcement?.message ?? "",
+      href: config.announcement?.href ?? "",
+      linkLabel: config.announcement?.linkLabel ?? "",
     },
   };
 }
@@ -172,5 +185,6 @@ export function mergeSettings(
     trustBadges: overrides.trustBadges ?? base.trustBadges,
     features: { ...base.features, ...overrides.features },
     theme: overrides.theme ?? base.theme,
+    announcement: overrides.announcement ?? base.announcement,
   };
 }

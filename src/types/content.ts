@@ -192,6 +192,16 @@ export interface SiteConfig {
   features?: SiteFeatures;
   /** Optional runtime brand theme (industry preset or custom colors). */
   theme?: BrandTheme;
+  /** Optional announcement bar shown above the navbar. */
+  announcement?: SiteAnnouncement;
+}
+
+export interface SiteAnnouncement {
+  enabled: boolean;
+  message: string;
+  /** Optional link target for the bar. */
+  href?: string;
+  linkLabel?: string;
 }
 
 export interface SiteFeatures {
