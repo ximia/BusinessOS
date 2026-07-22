@@ -8,6 +8,7 @@ import type {
   GalleryImage,
   Post,
   Employee,
+  Integration,
 } from "@/types/database";
 
 /**
@@ -375,5 +376,30 @@ export const mockFollowUps: FollowUp[] = [
     note: "Send the interior detail quote.",
     completed: true,
     created_at: hours(6),
+  },
+];
+
+/**
+ * Demo integrations so the Integrations admin is explorable without Supabase.
+ * Only non-secret, public config is shown pre-connected; secrets stay empty.
+ */
+export const mockIntegrations: Integration[] = [
+  {
+    provider: "google-analytics",
+    enabled: true,
+    config: { measurementId: "G-DEMO12345" },
+    updated_at: days(3),
+  },
+  {
+    provider: "calendly",
+    enabled: true,
+    config: { schedulingUrl: "https://calendly.com/halcyon-detailing/consult" },
+    updated_at: days(8),
+  },
+  {
+    provider: "stripe",
+    enabled: false,
+    config: { publishableKey: "pk_test_demo", secretKey: "sk_test_demo_secret" },
+    updated_at: days(15),
   },
 ];

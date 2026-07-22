@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Sora } from "next/font/google";
 import Script from "next/script";
 import { Providers } from "@/components/providers";
+import { AnalyticsScripts } from "@/components/shared/analytics-scripts";
 import { buildMetadata, localBusinessJsonLd } from "@/lib/seo";
 import { themeConfig } from "@/config/theme.config";
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <Providers>{children}</Providers>
+        <AnalyticsScripts />
         <Script
           id="ld-local-business"
           type="application/ld+json"

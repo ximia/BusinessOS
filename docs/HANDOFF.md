@@ -143,6 +143,24 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   area to its landing page + "see all"; `sitemap.ts` includes the hub, all city
   pages, and all city×service pages.
 
+### `src/features/integrations/` — Integrations (Priority 7)
+- **Security model:** secrets live in a NEW `integrations` table with
+  **auth-only RLS** (no anon policy — unlike anon-readable `business_settings`),
+  so credentials never reach the public anon key. Migration `0004_integrations`.
+- `catalog.ts` — pure provider metadata + field specs; fields flagged `secret`
+  are masked. `SECRET_MASK` sentinel means "unchanged".
+- `services/integrations.service.ts` — `getIntegrations()` (auth read, demo
+  fallback `mockIntegrations`) and `getMaskedIntegrations()` which strips secret
+  values before anything reaches a Client Component.
+- `integrations.actions.ts` — `saveIntegration` (preserves stored secrets when
+  the input is blank/masked), `setIntegrationEnabled`, `disconnectIntegration`.
+- Admin: `components/admin/integrations-manager.tsx` at `/admin/integrations`
+  (nav + ⌘K "I") — provider cards by category, status badges, enable switch,
+  configure dialog (secret inputs never prefilled), disconnect.
+- Public wire-up: `components/shared/analytics-scripts.tsx` (in root layout)
+  injects GA4/GTM from PUBLIC env vars `NEXT_PUBLIC_GA_ID` / `NEXT_PUBLIC_GTM_ID`
+  (see `.env.example`). NOTE: adding a provider = update `catalog.ts` only.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -167,13 +185,14 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P9** Local SEO — auto-generated city + city×service landing pages (SSG) with
   localized copy, JSON-LD (Service / LocalBusiness / FAQPage / BreadcrumbList),
   internal linking, and full sitemap coverage.
+- **P7** Integrations — securely stored provider config (auth-only table, masked
+  secrets) admin page for GA4, GTM, Google Business, Stripe, Twilio, Calendly,
+  Zapier; plus GA4/GTM public tag injection via env vars.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-7. **Integrations** page (Google, Stripe, Twilio, Calendly, GA, GTM, Zapier…),
-   securely stored config.
 8. **AI tools** — provider-abstracted generators (service copy, FAQs, blog, meta,
    alt text, review replies, city pages).
 10. **Multi-location** — per-location address/hours/phone/map/reviews/landing.
@@ -193,6 +212,6 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 7 (Integrations page — securely stored config for Google, Stripe,
-> Twilio, Calendly, GA, GTM, Zapier…). Keep the build green and preserve
-> existing functionality."
+> Priority 8 (AI tools — provider-abstracted generators for service copy, FAQs,
+> blog, meta, alt text, review replies, city pages). Keep the build green and
+> preserve existing functionality."

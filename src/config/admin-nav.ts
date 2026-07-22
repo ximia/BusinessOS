@@ -9,6 +9,7 @@ import {
   Settings,
   Palette,
   LayoutTemplate,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,5 +31,6 @@ export const adminNav: AdminNavItem[] = [
   { label: "Employees", href: "/admin/employees", icon: UserCog, shortcut: "E" },
   { label: "Website", href: "/admin/website", icon: LayoutTemplate, shortcut: "W" },
   { label: "Theme", href: "/admin/theme", icon: Palette, shortcut: "T" },
+  { label: "Integrations", href: "/admin/integrations", icon: Plug, shortcut: "I" },
   { label: "Settings", href: "/admin/settings", icon: Settings, shortcut: "S" },
 ];

@@ -167,6 +167,14 @@ export interface Post {
   updated_at: string;
 }
 
+export interface Integration {
+  provider: string;
+  enabled: boolean;
+  /** Provider config keyed by field (see features/integrations/catalog). */
+  config: Record<string, string>;
+  updated_at: string;
+}
+
 export type UserRole = "admin" | "staff" | "readonly";
 
 export interface Employee {
