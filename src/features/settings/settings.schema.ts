@@ -1,6 +1,10 @@
 import { z } from "zod";
 import type { SiteConfig } from "@/types/content";
 import { themeConfig } from "@/config/theme.config";
+import {
+  homeLayoutSchema,
+  DEFAULT_HOME_LAYOUT,
+} from "@/features/website/sections.catalog";
 
 /**
  * Business Settings — the editable subset of {@link SiteConfig} that a
@@ -88,6 +92,9 @@ export const businessSettingsSchema = z.object({
     href: z.string().max(300).optional().or(z.literal("")),
     linkLabel: z.string().max(40).optional().or(z.literal("")),
   }),
+
+  /** Homepage section layout (Website Builder). Optional — defaults applied. */
+  homeLayout: homeLayoutSchema.optional(),
 });
 
 export type BusinessSettings = z.infer<typeof businessSettingsSchema>;
@@ -139,6 +146,7 @@ export function settingsFromConfig(config: SiteConfig): BusinessSettings {
       href: config.announcement?.href ?? "",
       linkLabel: config.announcement?.linkLabel ?? "",
     },
+    homeLayout: config.homeLayout ?? DEFAULT_HOME_LAYOUT,
   };
 }
 
@@ -186,5 +194,6 @@ export function mergeSettings(
     features: { ...base.features, ...overrides.features },
     theme: overrides.theme ?? base.theme,
     announcement: overrides.announcement ?? base.announcement,
+    homeLayout: overrides.homeLayout ?? base.homeLayout,
   };
 }

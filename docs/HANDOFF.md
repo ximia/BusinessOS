@@ -110,6 +110,22 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   (all dependency-free; `trend-chart` is an SVG area sparkline with hover).
   `app/admin/(dashboard)/page.tsx` is the redesigned Stripe/Linear layout.
 
+### `src/features/website/` — Website Builder (Priority 2)
+- `sections.catalog.ts` — pure metadata (no React): `HOME_SECTION_TYPES`,
+  `SECTION_CATALOG`, `HomeSectionInstance`, `DEFAULT_HOME_LAYOUT`,
+  `homeLayoutSchema`, `normalizeLayout`, `newInstanceId`. Safe on client+server.
+- `website.actions.ts` — `updateHomeLayout(layout)`; merges over existing stored
+  settings (never drops other fields), auth-guarded, demo-safe, revalidates.
+- `SiteConfig.homeLayout?` added; wired through `settingsFromConfig`,
+  `mergeSettings`, and preserved in `settings-editor.tsx` onSubmit.
+- Rendering: `components/sections/section-renderer.tsx` maps section type →
+  component; `app/(marketing)/page.tsx` renders enabled sections in stored order
+  (falls back to `DEFAULT_HOME_LAYOUT`), staying statically generated.
+- Admin: `components/admin/website-builder.tsx` at `/admin/website` (nav +
+  ⌘K shortcut "W") — drag-drop reorder, up/down, show/hide, duplicate, remove,
+  add-section menu, reset-to-default, unsaved-changes bar. NOTE: adding a section
+  type requires updating BOTH `sections.catalog.ts` and `section-renderer.tsx`.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -128,14 +144,14 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P5** Analytics dashboard redesign (Stripe/Linear): KPI + mini-metric tiles,
   14-day leads trend chart, leads-by-stage, revenue (won + weighted projection),
   cross-entity activity feed, traffic sources, popular services.
+- **P2** Website Builder — reorder / show-hide / duplicate / remove homepage
+  sections (drag-drop + accessible controls), persisted to settings; homepage
+  renders from the stored layout.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-2. **Website Builder** — enable/disable/reorder/duplicate homepage sections
-   (drag-drop), persist to settings; sections already modular in
-   `components/sections/`.
 9. **Local SEO** — auto city/service landing pages, schema, sitemaps.
 7. **Integrations** page (Google, Stripe, Twilio, Calendly, GA, GTM, Zapier…),
    securely stored config.
@@ -158,6 +174,5 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 2 (Website Builder — enable/disable/reorder/duplicate homepage
-> sections, persisted to settings). Keep the build green and preserve existing
-> functionality."
+> Priority 9 (Local SEO — auto city/service landing pages, schema, sitemaps).
+> Keep the build green and preserve existing functionality."

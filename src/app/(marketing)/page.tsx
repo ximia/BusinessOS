@@ -1,32 +1,32 @@
-import { Hero } from "@/components/sections/hero";
-import { LogoStrip } from "@/components/sections/logo-strip";
-import { AboutSection } from "@/components/sections/about-section";
-import { ServicesSection } from "@/components/sections/services-section";
-import { ProcessSection } from "@/components/sections/process-section";
-import { BeforeAfterSection } from "@/components/sections/before-after-section";
-import { TestimonialsSection } from "@/components/sections/testimonials-section";
-import { FaqSection } from "@/components/sections/faq-section";
-import { ServiceAreaSection } from "@/components/sections/service-area-section";
-import { ContactSection } from "@/components/sections/contact-section";
-import { CtaSection } from "@/components/sections/cta-section";
+import { Fragment } from "react";
 import { getApprovedTestimonials } from "@/services/reviews.service";
+import { getSiteConfig } from "@/features/settings/settings.service";
+import {
+  DEFAULT_HOME_LAYOUT,
+  normalizeLayout,
+} from "@/features/website/sections.catalog";
+import { renderSection } from "@/components/sections/section-renderer";
 
 export default async function HomePage() {
-  const testimonials = await getApprovedTestimonials();
+  const [testimonials, config] = await Promise.all([
+    getApprovedTestimonials(),
+    getSiteConfig(),
+  ]);
+
+  // Admin-defined layout (Website Builder) with a safe default fallback.
+  const layout = config.homeLayout
+    ? normalizeLayout(config.homeLayout)
+    : DEFAULT_HOME_LAYOUT;
 
   return (
     <>
-      <Hero />
-      <LogoStrip />
-      <ServicesSection />
-      <AboutSection />
-      <ProcessSection />
-      <BeforeAfterSection />
-      <TestimonialsSection testimonials={testimonials} />
-      <ServiceAreaSection />
-      <FaqSection limit={6} />
-      <ContactSection />
-      <CtaSection />
+      {layout
+        .filter((section) => section.enabled)
+        .map((section) => (
+          <Fragment key={section.id}>
+            {renderSection(section.type, { testimonials })}
+          </Fragment>
+        ))}
     </>
   );
 }

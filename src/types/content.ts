@@ -5,6 +5,8 @@
  * The homepage and marketing pages read exclusively from objects typed here,
  * so re-branding the site is a matter of editing `src/config/*`, never JSX.
  */
+import type { HomeSectionInstance } from "@/features/website/sections.catalog";
+
 export interface NavLink {
   label: string;
   href: string;
@@ -194,6 +196,11 @@ export interface SiteConfig {
   theme?: BrandTheme;
   /** Optional announcement bar shown above the navbar. */
   announcement?: SiteAnnouncement;
+  /**
+   * Optional homepage section layout (Website Builder). Ordered list of section
+   * instances with enable flags. When absent, the default layout is used.
+   */
+  homeLayout?: HomeSectionInstance[];
 }
 
 export interface SiteAnnouncement {

@@ -77,6 +77,7 @@ export function SettingsEditor({
     values.theme = values.theme ?? initial.theme;
     values.features = values.features ?? initial.features;
     values.announcement = values.announcement ?? initial.announcement;
+    values.homeLayout = values.homeLayout ?? initial.homeLayout;
 
     const res = await updateBusinessSettings(values);
     if (res.ok) {
