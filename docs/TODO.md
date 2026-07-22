@@ -70,6 +70,16 @@ the next release is persistence.
 - [ ] **Scheduling / appointments** module.
 - [ ] **Agency OS integration seam** — outbound webhooks + authenticated inbound
       receiver (see `API.md` §4, `DECISIONS.md` ADR-0005).
+- [ ] **Connector server identity / authorized read context** — the read-only
+      Agency API (`/api/agency/v1/metrics`) reads through `src/services/*` under
+      RLS with only an API-key (machine) credential, so on a **Supabase-
+      configured** deployment staff-only aggregates come back empty (correct in
+      demo mode). Give the connector an authorized read path so live metrics
+      work — without bypassing the services boundary, exposing PII, or weakening
+      RLS. Design options in `DECISIONS.md` ADR-0011: (a) narrow audited
+      service-role read scoped to aggregates, (b) dedicated read-only Postgres
+      role + RLS policy for the connector, or (c) a machine/service session.
+      Must be independently revocable.
 - [ ] **Multi-location** — per-location address/hours/phone/map/reviews/landing.
 - [ ] **Multi-tenancy / white-label** — `organizations`, membership, custom
       domains, per-tenant storage; built on the existing `org_id`.

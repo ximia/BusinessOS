@@ -10,6 +10,66 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0011 — Agency API reads through the services layer under RLS; no elevated read context yet
+**Status:** Accepted (with a known, deferred limitation) · 2026-07
+
+**Decision:** The read-only Agency API (`/api/agency/v1/*`, Phase 2) composes the
+existing `src/services/*` functions and does **not** introduce a service-role
+(RLS-bypassing) read path. Requests authenticate with a per-deployment API key,
+which is a machine-peer credential — **not** a Supabase staff session.
+
+**Context:** The requirement was explicit: use existing services, never query
+Supabase directly, never duplicate business logic. The services read via the
+cookie-scoped Supabase client, which respects RLS. An API-key caller has no
+staff session, so on a **Supabase-configured** deployment the services run under
+the `anon`/no-session context — which RLS restricts to public data. Staff-only
+tables (leads, quotes, employees…) therefore return empty in that context, so
+`/metrics` reports zeros on a live deployment (it is fully correct in demo mode,
+where services return mock data).
+
+**Why we accepted it now:** the alternative — wiring `createAdminClient()`
+(service-role, bypasses all RLS) into the metrics path — was explicitly out of
+scope and is a security-sensitive decision that deserves its own design. Read-
+only aggregate endpoints returning conservative/empty data on a live deployment
+is a safe interim state; over-exposing via a bypass is not.
+
+**Consequences / what must change later:** a dedicated **connector server
+identity** is needed so the API can read authorized aggregates on a configured
+deployment. Options to design when that phase lands: (a) a narrow, audited
+service-role read used *only* by the metrics service, scoped to aggregate
+queries; (b) a dedicated Postgres role / RLS policy granting the connector
+read-only access to the specific tables; or (c) a Supabase machine/service
+session. Whichever is chosen must keep the services layer as the boundary, must
+never expose per-record PII, and must be independently revocable. Tracked in
+`TODO.md`. This limitation does not affect independence, demo mode, or the
+no-customer-data guarantee.
+
+---
+
+## ADR-0010 — Read-only, API-key-authenticated Agency API as the first route handlers
+**Status:** Accepted · 2026-07
+
+**Decision:** Expose Agency OS ↔ Business OS communication first as a **read-only**
+API (`GET /api/agency/v1/{health,version,capabilities,metrics}`), authenticated
+by a per-deployment bearer key with constant-time comparison, built on the
+dormant Phase 1 connector. Mutating surfaces (webhooks, commands, registration,
+sync) are deliberately excluded.
+
+**Context:** Agency OS must be able to *observe* a fleet before it can *act* on
+it. Reads are lower-risk than mutations and let the contract, envelope shape, and
+auth lane stabilize first. A machine caller needs a credential that is separate
+from human Supabase-cookie auth.
+
+**Consequences:** These are the app's first `route.ts` handlers. Every response
+is Zod-validated and wrapped in a uniform envelope; disabled deployments return a
+`503 disabled` signal; endpoints expose operational aggregates only (no customer
+data). Request signing (HMAC), replay defense, and key rotation are deferred —
+they matter most for the mutating surfaces that don't yet exist (see `API.md`
+§5). The versioned `/v1/` path lets the contract evolve without lockstep fleet
+upgrades.
+
+---
+
 ## ADR-0009 — Documentation is a first-class product deliverable
 **Status:** Accepted · 2026-07
 
