@@ -43,13 +43,12 @@ export default function OgImage() {
             {siteConfig.companyName}
           </div>
         </div>
-        <div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 60, fontWeight: 700, lineHeight: 1.1, maxWidth: 900 }}>
             {siteConfig.tagline}
           </div>
           <div style={{ marginTop: 24, fontSize: 28, color: "#93c5fd" }}>
-            {siteConfig.address.city}, {siteConfig.address.state} ·{" "}
-            {siteConfig.industry}
+            {`${siteConfig.address.city}, ${siteConfig.address.state} · ${siteConfig.industry}`}
           </div>
         </div>
       </div>
