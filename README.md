@@ -119,18 +119,19 @@ supabase/                   # SQL migration + seed
 
 ## 🔌 Connect Supabase (go live)
 
+**Full walkthrough: [`docs/SETUP.md`](docs/SETUP.md)** — Supabase project,
+migrations, env vars, admin user, storage, analytics, AI keys, multi-tenancy, and
+Vercel deploy, with a troubleshooting table.
+
+Quick version:
+
 1. Create a project at [supabase.com](https://supabase.com).
-2. Run `supabase/migrations/0001_init.sql` in the SQL editor (optionally
-   `seed.sql`).
-3. Fill in `.env.local`:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=...
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-   SUPABASE_SERVICE_ROLE_KEY=...
-   NEXT_PUBLIC_SITE_URL=https://www.yourclient.com
-   ```
-4. Create an admin user in **Authentication → Users**. That user can now sign in
-   at `/admin`.
+2. Run every migration in `supabase/migrations/` **in order** (`0001` →
+   `0005`); `0005` is opt-in for multi-tenancy. `seed.sql` is optional demo data.
+3. Fill in `.env.local` (see `.env.example` — Supabase, site URL, analytics, AI).
+4. Create an auth user **and a matching `employees` row** (email + role + org) —
+   the app resolves tenant/role from that row, so skipping it leaves the admin
+   empty/read-only. Details in `docs/SETUP.md` §4.
 
 Contact and quote forms write to the `leads` / `quote_requests` tables
 automatically (public insert is allowed by RLS; reads are staff-only).
@@ -147,17 +148,15 @@ automatically (public insert is allowed by RLS; reads are staff-only).
 
 ---
 
-## 🏢 Turning this into a multi-tenant SaaS
+## 🏢 Multi-tenant / white-label
 
-The schema ships with a nullable `org_id` on every business table. To go
-multi-tenant:
-
-1. Add an `organizations` table + membership mapping users → orgs.
-2. Populate `org_id` on inserts and tighten RLS to `org_id = <current org>`.
-3. Resolve the org from the request (subdomain/domain) and pass it through the
-   `src/services/*` layer — the **only** code that reads data.
-
-Nothing in the UI hardcodes single-tenant assumptions.
+Multi-tenancy is **built in** (opt-in). Migration `0005_multi_tenancy.sql` adds an
+`organizations` table and tightens RLS to be org-scoped and role-aware, resolving
+the active tenant per request by subdomain, custom domain, or membership
+(`src/features/tenant/`). Manage orgs, custom domains, and team roles from
+**/admin/organization**. Turn it on by running `0005` and adding your org rows —
+see [`docs/SETUP.md`](docs/SETUP.md) §8. Single-tenant installs can ignore it
+entirely.
 
 ---
 

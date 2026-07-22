@@ -256,7 +256,11 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
   custom domain, team roles, agency org list).
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
-- Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
+- **CI:** `.github/workflows/ci.yml` — typecheck + lint + build gate on push/PR
+  (runs in demo mode, no secrets).
+- Docs: `README.md`, `docs/ARCHITECTURE.md`, **`docs/SETUP.md`** (full go-live:
+  Supabase, migrations 0001–0005, env, admin user + employees-row gotcha,
+  storage, analytics, AI keys, multi-tenancy, Vercel), this file.
 
 ## ⏭ Remaining roadmap
 - All prioritized features are built. 🎉 Client portal (#6) is descoped.
