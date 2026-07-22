@@ -66,4 +66,9 @@ export const ENV = {
    * `DEFAULT_REGISTER_PATH` in the registration config.
    */
   REGISTER_PATH: "AGENCY_OS_REGISTER_PATH",
+  /**
+   * Optional override for the Agency OS event-ingest endpoint path. Defaults to
+   * `DEFAULT_EVENTS_PATH` in the events config.
+   */
+  EVENTS_PATH: "AGENCY_OS_EVENTS_PATH",
 } as const;

@@ -3,6 +3,7 @@
 import { contactSchema } from "@/lib/validations";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/is-configured";
+import { publishEvent } from "@/lib/agency/events";
 
 export type ActionState = {
   ok: boolean;
@@ -62,6 +63,10 @@ export async function submitContact(
       };
     }
   }
+
+  // Announce the lead to Agency OS (optional, non-blocking, no PII). No-op when
+  // the connector is disabled; never throws or delays this response.
+  publishEvent("lead.created", { source: "website" });
 
   return {
     ok: true,

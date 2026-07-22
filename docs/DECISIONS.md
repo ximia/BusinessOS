@@ -10,6 +10,45 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0013 — Event publishing via an outbox; `publishEvent()` is the only business-facing API
+**Status:** Accepted · 2026-07
+
+**Decision:** Domain/system events reach Agency OS through a versioned event
+system with an **outbox**. Business logic calls only `publishEvent(name, data,
+options?)`, which validates (Zod), wraps the payload in a versioned envelope,
+writes to the outbox, and returns. A separate **dispatcher** drains the outbox
+and delivers, owning transport, retry/backoff, and dead-lettering. Business logic
+never knows how or whether events are delivered.
+
+**Context:** Event reporting must never couple business logic to Agency OS or its
+availability. The outbox pattern decouples "record that it happened" from
+"deliver it," so a slow or offline Agency OS cannot block or fail a user action.
+`publishEvent()` is deliberately the single seam.
+
+**Guarantees:** `publishEvent()` never throws, never blocks, is a no-op when the
+connector is disabled, and is idempotent via an optional `idempotencyKey`. Events
+are versioned (per-event `version` + envelope `specVersion`) and carry no
+customer PII. Delivery retries transient failures with exponential backoff +
+jitter and dead-letters terminal/exhausted ones. Retry scheduling is event-driven
+(one self-terminating, `unref`'d timer), not a poller.
+
+**Why in-memory outbox (Phase 4):** durability across restarts would require a
+persistent store written from a machine/background context under RLS — the
+unresolved ADR-0011 problem. An in-memory outbox satisfies "queue OR safely fail"
+(undelivered events are lost on process exit — a safe failure that never
+interrupts operation) and is fronted by an `OutboxStore` interface so a
+Supabase-backed durable outbox can replace it later. Cross-restart delivery
+guarantees and true durability are deferred; the Agency OS ingest endpoint should
+be idempotent by `idempotencyKey` regardless. On serverless, background delivery
+after the response may be cut short — acceptable for best-effort reporting.
+
+**Consequences:** Adding an event = add a schema+version to the catalog; adding a
+producer = one `publishEvent()` call. A shared signed-POST primitive
+(`src/lib/agency/outbound.ts`) backs event delivery. Not built this phase:
+durable outbox, monitoring, inbound commands, synchronization.
+
+---
+
 ## ADR-0012 — Outbound self-registration is fire-and-forget, retryable, and startup-triggered
 **Status:** Accepted · 2026-07
 

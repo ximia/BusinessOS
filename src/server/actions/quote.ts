@@ -3,6 +3,7 @@
 import { quoteSchema } from "@/lib/validations";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/is-configured";
+import { publishEvent } from "@/lib/agency/events";
 import type { ActionState } from "./contact";
 
 /** Handles a public quote-request submission. */
@@ -58,6 +59,10 @@ export async function submitQuote(
       };
     }
   }
+
+  // Announce the quote to Agency OS (optional, non-blocking, no PII). No-op when
+  // the connector is disabled; never throws or delays this response.
+  publishEvent("quote.created", { service: parsed.data.service });
 
   return {
     ok: true,

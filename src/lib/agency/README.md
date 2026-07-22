@@ -40,6 +40,8 @@ it did before this code existed.
 | `api/` | Read-only Agency API layer (Phase 2): `auth`, `response`, `handler`, `schema`. |
 | `log.ts` | Scoped `[agency:<scope>]` logger (no secrets/PII). |
 | `registration/` | Outbound self-registration (Phase 3): `config`, `payload`, `client`, `retry`, `state`, orchestrator. |
+| `outbound.ts` | Shared signed-`POST` primitive (used by event delivery). |
+| `events/` | Versioned event system + outbox (Phase 4): `registry`, `envelope`, `outbox`, `config`, `dispatcher`, `publishEvent`. |
 
 ### Phase 2 — read-only Agency API (implemented)
 
@@ -68,6 +70,23 @@ updates. See `docs/API.md` §2b and `docs/DECISIONS.md` ADR-0012.
 **Registration env vars:** `AGENCY_OUTBOUND_API_KEY` (required to register),
 `AGENCY_OS_REGISTER_PATH` (optional path override). Registration also requires
 `AGENCY_OS_ENABLED=true`, `AGENCY_OS_BASE_URL`, and `BUSINESS_OS_DEPLOYMENT_ID`.
+
+### Phase 4 — event system + outbox (implemented)
+
+Business logic calls **only** `publishEvent(name, data, options?)` from
+`@/lib/agency/events` and never learns how events are delivered. `publishEvent`
+validates (Zod), wraps the payload in a **versioned envelope**, writes to the
+**outbox**, and returns — it **never throws**, never blocks, is a **no-op when
+disabled**, and is **idempotent** (optional `idempotencyKey`). A **dispatcher**
+drains the outbox and delivers via the shared signed `POST`, with exponential
+backoff + jitter, **dead-lettering**, and structured logging. If Agency OS is
+down, events queue and Business OS keeps running. Event payloads are operational
+only (**no PII**). Default outbox is in-memory (per process) behind an
+`OutboxStore` interface — a durable store can replace it later (ADR-0013).
+
+**Events env var:** `AGENCY_OS_EVENTS_PATH` (optional path override; default
+`/api/v1/events`). Delivery reuses `AGENCY_OUTBOUND_API_KEY`. See `docs/API.md`
+§2c and `docs/DECISIONS.md` ADR-0013.
 
 ## Configuration (all optional; unset ⇒ dormant + standalone)
 

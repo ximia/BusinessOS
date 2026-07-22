@@ -39,6 +39,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   authenticates with `AGENCY_OUTBOUND_API_KEY`. Skipped entirely when the
   connector is disabled/unconfigured. No monitoring, polling, synchronization,
   commands, deployment automation, or version updates.
+- **Agency event system (Phase 4, outbox).** `src/lib/agency/events` — a
+  reusable, versioned, Zod-validated event system. Business logic calls only
+  `publishEvent(name, data, options?)`; a per-process **outbox** + **dispatcher**
+  own delivery with exponential backoff + jitter, idempotency, dead-lettering,
+  and structured logging. Never throws, never blocks, no-op when disabled; if
+  Agency OS is down, events queue and Business OS is unaffected. Event catalog:
+  `deployment.registered/updated`, `health.changed`, `lead.created`,
+  `quote.created`, `appointment.created`, `review.received`, `backup.completed`
+  (operational payloads only — no PII). Demonstrated by wiring `lead.created`
+  and `quote.created` into the contact/quote server actions.
 
 ### Changed
 - **Product direction:** repositioned from "multi-industry website + admin

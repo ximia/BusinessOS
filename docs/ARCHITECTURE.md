@@ -255,11 +255,11 @@ the **client-side seam**:
   `app/api/agency/v1/*` (`health`, `version`, `capabilities`, `metrics`) lets
   Agency OS observe a deployment. It exposes operational aggregates only — never
   customer data — and is built on the dormant connector in `src/lib/agency`.
-- **Outbound-first:** self-registration on startup is **built** — the deployment
-  announces itself to Agency OS via `src/lib/agency/registration`, triggered
-  fire-and-forget from `src/instrumentation.ts` (never blocks or prevents
-  startup). Event reporting (new lead, quote, etc.) is the next outbound step and
-  is not yet built.
+- **Outbound-first:** self-registration on startup (`src/lib/agency/registration`,
+  fired fire-and-forget from `src/instrumentation.ts`) and a versioned event
+  system with an outbox (`src/lib/agency/events`) are both **built**. Business
+  logic calls only `publishEvent()`; the outbox/dispatcher own delivery, retries,
+  and dead-lettering. Neither ever blocks or prevents startup/operation.
 - **Inbound receiver (future):** a route handler under `app/api/agency/v1/` will
   accept authenticated Agency OS callbacks — the first *mutating* handler.
 - **The services layer is the boundary.** Read/sync logic goes through

@@ -155,6 +155,50 @@ inbound commands, deployment automation, version updates.
 
 ---
 
+## 2c. Event publishing (implemented; outbox)
+
+A reusable, versioned event system for reporting domain/system events to Agency
+OS. Lives in `src/lib/agency/events`. **Business logic calls only
+`publishEvent(name, data, options?)`** and never learns how events are delivered.
+
+- **Versioned events.** Each event has a Zod schema + version in the catalog
+  (`events/registry.ts`), carried on the envelope (`specVersion` for the
+  envelope format, `version` for the payload). Current catalog:
+  `deployment.registered`, `deployment.updated`, `health.changed`,
+  `lead.created`, `quote.created`, `appointment.created`, `review.received`,
+  `backup.completed`.
+- **`publishEvent()` contract:** validates the payload (Zod), wraps it in an
+  envelope, writes to the **outbox**, kicks the dispatcher, and returns. It
+  **never throws**, never blocks, is a **no-op when the connector is disabled**,
+  and is **idempotent** (pass `idempotencyKey`, e.g. a domain id, to collapse
+  duplicates).
+- **Outbox + dispatcher.** `publishEvent` only enqueues. The dispatcher
+  (`events/dispatcher.ts`) drains the outbox and delivers via the shared signed
+  `POST` (`src/lib/agency/outbound.ts`) to
+  `POST {AGENCY_OS_BASE_URL}{AGENCY_OS_EVENTS_PATH}` (default `/api/v1/events`),
+  auth `Bearer <AGENCY_OUTBOUND_API_KEY>`, with `x-idempotency-key`,
+  `x-event-name`, `x-event-version`, `x-business-os-deployment` headers.
+- **Retry & backoff.** Transient failures (network/timeout/5xx/429) back off
+  (exponential + jitter, bounded `maxAttempts`) and retry; terminal 4xx or
+  exhausted attempts are **dead-lettered** (kept, marked `dead`). Retries are
+  event-driven (a single self-terminating timer), not a poller.
+- **Agency down ⇒ no impact.** Events wait in the outbox; Business OS operation
+  is never interrupted. The default outbox is in-memory (per process) — see
+  `DECISIONS.md` ADR-0013 for the durability trade-off and the future durable
+  store.
+- **No customer data.** Event payloads are operational only (ids, types,
+  statuses, counts, ratings) — no names/emails/phones/messages.
+
+**Usage (the entire business-logic surface):**
+```ts
+import { publishEvent } from "@/lib/agency/events";
+publishEvent("lead.created", { source: "website" });
+publishEvent("quote.created", { service }, { idempotencyKey: `quote:${id}` });
+```
+Wired as a demonstration in the contact and quote server actions.
+
+---
+
 ## 3. Authentication & authorization
 
 - **Auth:** Supabase Auth via `@supabase/ssr`. Sessions are refreshed in
@@ -178,11 +222,10 @@ never Agency OS internals.
 
 ### Direction & shape (intended)
 
-- **Outbound-first.** Self-registration on startup is **implemented** (§2b) —
-  the first outbound call. The next step is emitting authenticated events (new
-  lead, quote requested, review submitted, etc.) to the Agency OS; that emission
-  will happen through the services layer so the rest of the app stays unaware of
-  it. (Event publishing is not yet built.)
+- **Outbound-first.** Self-registration on startup (§2b) and a versioned event
+  system with an outbox (§2c) are both **implemented**. Business logic emits via
+  `publishEvent()` and stays unaware of delivery; the outbox/dispatcher own
+  transport, retries, and dead-lettering.
 - **Inbound receiver.** A future authenticated route handler under `app/api/`
   (e.g. `app/api/agency/v1/webhooks/route.ts`) would accept Agency OS callbacks.
   It validates a signature, parses the payload with Zod, and applies changes
