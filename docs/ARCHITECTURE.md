@@ -251,14 +251,17 @@ Each client instance will eventually communicate with a **separate Agency OS**
 over secure, versioned APIs and webhooks. Architecturally this repo only owns
 the **client-side seam**:
 
-- **Outbound-first:** the client instance reports events (new lead, quote, etc.)
-  to the Agency OS via authenticated webhooks/API calls.
-- **Inbound receiver:** a future route handler under `app/api/` will accept
-  authenticated Agency OS callbacks — the first and only expected use of REST
-  route handlers.
-- **The services layer is the boundary.** Sync logic reads/writes through
+- **Read-only API (built):** an authenticated, versioned, read-only surface at
+  `app/api/agency/v1/*` (`health`, `version`, `capabilities`, `metrics`) lets
+  Agency OS observe a deployment. It exposes operational aggregates only — never
+  customer data — and is built on the dormant connector in `src/lib/agency`.
+- **Outbound-first (future):** the client instance reports events (new lead,
+  quote, etc.) to the Agency OS via authenticated webhooks/API calls.
+- **Inbound receiver (future):** a route handler under `app/api/agency/v1/` will
+  accept authenticated Agency OS callbacks — the first *mutating* handler.
+- **The services layer is the boundary.** Read/sync logic goes through
   `src/services/*`, keeping the rest of the app unaware of the Agency OS.
-- **Versioned + authenticated.** See `API.md` for the intended contract.
+- **Versioned + authenticated.** See `API.md` for the contract.
 
 Do **not** implement or document Agency OS internals here — only this client-side
 compatibility surface.

@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as the master template: `PRODUCT.md`, `ROADMAP.md`, `UI_GUIDELINES.md`,
   `CODING_STANDARDS.md`, `DATABASE.md`, `API.md`, `DECISIONS.md`, `CHANGELOG.md`,
   `TODO.md`, plus a root `CLAUDE.md` operating manual.
+- **Agency Connector foundation (Phase 1, dormant).** `src/lib/agency` —
+  configuration, deployment + organization identity, and health/version/
+  capabilities services, all Zod-validated. Makes no network requests and is
+  imported by nothing in the running app; Business OS behaves identically.
+- **Agency API (Phase 2, read-only).** Authenticated route handlers at
+  `app/api/agency/v1/*` — `GET health`, `version`, `capabilities`, `metrics`.
+  Composes existing services, returns operational aggregates only (no customer
+  data / PII), validates every response, and returns a `503 disabled` envelope
+  when the connector is off. Auth via per-deployment `AGENCY_INBOUND_API_KEY`
+  (bearer token, constant-time compare). No registration, commands, sync, or
+  polling.
 
 ### Changed
 - **Product direction:** repositioned from "multi-industry website + admin

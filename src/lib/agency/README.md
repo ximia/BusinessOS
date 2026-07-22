@@ -36,6 +36,18 @@ it did before this code existed.
 | `services/health.service.ts` | Local health report (no remote probes). |
 | `services/version.service.ts` | Version / fleet-awareness info. |
 | `services/capabilities.service.ts` | Module + integration capability descriptor. |
+| `services/metrics.service.ts` | Aggregate-only metrics (Phase 2); composes existing business services. |
+| `api/` | Read-only Agency API layer (Phase 2): `auth`, `response`, `handler`, `schema`. |
+
+### Phase 2 — read-only Agency API (implemented)
+
+Authenticated `GET` route handlers at `app/api/agency/v1/*` (`health`,
+`version`, `capabilities`, `metrics`) let a future Agency OS **observe** a
+deployment. They are built on the Phase 1 primitives above, expose **operational
+aggregates only** (never customer data / PII), validate every response, and
+return `503 disabled` when the connector is off. Auth is a per-deployment bearer
+key (`AGENCY_INBOUND_API_KEY`). Still no registration, commands, sync, polling,
+or outbound calls. See `docs/API.md` §2a.
 
 ## Configuration (all optional; unset ⇒ dormant + standalone)
 

@@ -82,7 +82,44 @@ state on the client, and toast the outcome.
 
 Not application APIs, but HTTP surfaces the app serves:
 `sitemap.xml`, `robots.txt`, `opengraph-image` (edge, dynamic), `icon.svg`.
-There are **no `route.ts` handlers today.**
+
+---
+
+## 2a. Agency API — `/api/agency/v1/*` (implemented; read-only)
+
+The **only** `route.ts` handlers in the app. A read-only, authenticated surface
+a future Agency OS uses to observe a deployment. Built on the dormant connector
+primitives in `src/lib/agency` (Phase 1); the routes and API layer are Phase 2.
+
+**Endpoints (all `GET`, all authenticated):**
+
+| Endpoint | Returns | Source |
+|---|---|---|
+| `/api/agency/v1/health` | Liveness + local status: `status`, `connectorEnabled`, deployment/org id, `uptimeSeconds`, `checks.database` (configured/not — a local env check, **not** a remote probe). | `getHealthReport()` |
+| `/api/agency/v1/version` | `app`, `schema`, `connectorContract`, `runtime` — what the deployment *is*, for fleet/version awareness. | `getVersionInfo()` |
+| `/api/agency/v1/capabilities` | Present product modules + integration capability flags (all `false` this phase). Negotiation surface. | `getCapabilities()` |
+| `/api/agency/v1/metrics` | **Aggregate-only** operational metrics (lead/quote/review/content/team counts, status distributions, value rollups). | `buildMetricsSnapshot()` composing existing `src/services/*` |
+
+**Guarantees & boundaries:**
+- **Read-only.** No registration, commands, synchronization, or polling.
+- **No customer data, ever.** Metrics are counts/rollups/distributions only —
+  no names, emails, phones, messages, or per-record identifiers. The metrics
+  service composes existing business services and discards the records after
+  counting; it never queries Supabase directly and never re-implements logic.
+- **Every response is Zod-validated** before it leaves the process, wrapped in a
+  uniform envelope (`ok`, `resource`, `contractVersion`, `deploymentId`,
+  `generatedAt`, `data`). Non-success uses an error envelope (`ok:false`,
+  `status`, `message`).
+- **Disabled deployments** (connector off) return `503` with
+  `{ status: "disabled" }` uniformly — a benign, data-free signal.
+- Handlers run on the Node runtime, `dynamic = "force-dynamic"`, `no-store`.
+
+**Auth:** per-deployment shared secret in `AGENCY_INBOUND_API_KEY`, presented as
+`Authorization: Bearer <key>` (or `x-agency-key`), compared in constant time
+against a hashed value. This is a **separate lane** from human Supabase-cookie
+auth — the caller is a machine peer, not a staff session. Missing/invalid ⇒
+`401`. (HMAC request signing, replay defense, and key rotation are deferred to a
+later phase — they matter most for mutating surfaces, which don't exist yet.)
 
 ---
 
@@ -114,9 +151,11 @@ never Agency OS internals.
   call** to the Agency OS. Emission happens through the services layer so the
   rest of the app stays unaware of it.
 - **Inbound receiver.** A future authenticated route handler under `app/api/`
-  (e.g. `app/api/agency/webhook/route.ts`) accepts Agency OS callbacks — the
-  first and only planned REST handler. It validates a signature, parses the
-  payload with Zod, and applies changes **through the services layer**.
+  (e.g. `app/api/agency/v1/webhooks/route.ts`) would accept Agency OS callbacks.
+  It validates a signature, parses the payload with Zod, and applies changes
+  **through the services layer**. This is the first *mutating* handler — the
+  read-only Agency API (§2a) is already in place; the webhook receiver is not
+  yet built.
 
 ### Principles for the contract
 

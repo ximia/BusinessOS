@@ -49,4 +49,10 @@ export const ENV = {
   ORG_ID: "BUSINESS_OS_ORG_ID",
   /** Human-friendly organization slug. */
   ORG_SLUG: "BUSINESS_OS_ORG_SLUG",
+  /**
+   * Shared secret Agency OS must present to call the read-only Agency API
+   * (Phase 2). Read ONLY by the API auth module and never placed into
+   * `ConnectorConfig`, so it can never leak through the connector's surface.
+   */
+  INBOUND_API_KEY: "AGENCY_INBOUND_API_KEY",
 } as const;
