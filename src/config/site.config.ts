@@ -143,4 +143,10 @@ export const siteConfig: SiteConfig = {
     "Ceramic Pro certified",
     "500+ vehicles detailed",
   ],
+
+  // Optional, per-client feature flags. Override live from Admin → Settings.
+  features: {
+    floatingCallButton: true,
+    stickyMobileCta: true,
+  },
 };

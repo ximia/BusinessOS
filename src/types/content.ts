@@ -185,4 +185,16 @@ export interface SiteConfig {
   seo: SeoConfig;
   /** Trust signals shown near the hero — keep factual, no fake stats. */
   trustBadges: string[];
+  /**
+   * Optional, per-client feature flags. Every new capability is opt-in and
+   * configurable from here (and, at runtime, from the Business Settings admin).
+   */
+  features?: SiteFeatures;
+}
+
+export interface SiteFeatures {
+  /** Show a floating call button on mobile. */
+  floatingCallButton?: boolean;
+  /** Show a sticky "Get a quote" bar on mobile once the user scrolls. */
+  stickyMobileCta?: boolean;
 }

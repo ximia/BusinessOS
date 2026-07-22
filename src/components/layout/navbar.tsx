@@ -4,8 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Phone, ChevronDown } from "lucide-react";
-import { siteConfig } from "@/config";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/features/settings/settings-provider";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -26,6 +26,7 @@ import { themeConfig } from "@/config/theme.config";
 
 export function Navbar() {
   const pathname = usePathname();
+  const siteConfig = useSettings();
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
 
@@ -46,7 +47,7 @@ export function Navbar() {
       )}
     >
       <nav className="container flex h-16 items-center justify-between gap-4 md:h-18">
-        <Logo />
+        <Logo name={siteConfig.companyName} src={siteConfig.logo.src} alt={siteConfig.logo.alt} />
 
         <div className="hidden items-center gap-1 lg:flex">
           {siteConfig.nav.map((link) =>
@@ -109,7 +110,7 @@ export function Navbar() {
             <SheetContent side="right" className="w-[86%] max-w-sm p-0">
               <SheetHeader className="border-b">
                 <SheetTitle className="text-left">
-                  <Logo />
+                  <Logo name={siteConfig.companyName} src={siteConfig.logo.src} alt={siteConfig.logo.alt} />
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 p-4">

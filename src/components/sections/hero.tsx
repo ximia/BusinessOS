@@ -4,12 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, Phone, Star } from "lucide-react";
-import { siteConfig } from "@/config";
+import { useSettings } from "@/features/settings/settings-provider";
 import { Button } from "@/components/ui/button";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Hero() {
+  const siteConfig = useSettings();
   return (
     <section className="relative overflow-hidden">
       {/* Subtle brand wash + grid, kept restrained. */}
