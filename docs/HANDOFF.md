@@ -161,6 +161,23 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   injects GA4/GTM from PUBLIC env vars `NEXT_PUBLIC_GA_ID` / `NEXT_PUBLIC_GTM_ID`
   (see `.env.example`). NOTE: adding a provider = update `catalog.ts` only.
 
+### `src/features/ai/` — AI tools (Priority 8)
+- **Provider-abstracted.** `provider.ts` (server-only, `@anthropic-ai/sdk`) is
+  the single seam — `generateText(req)` calls Claude (`AI_MODEL`, default
+  `claude-opus-4-8`); swap it for another provider without touching generators
+  or UI. `isAIConfigured()` gates on `ANTHROPIC_API_KEY`.
+- `generators.ts` — pure catalog (7 generators): each declares input `fields`,
+  `build(inputs)` → `{system,user,maxTokens}` prompt (with brand context from
+  `siteConfig`/`services`), and a `demo(inputs)` templated fallback.
+- `ai.actions.ts` — `generateContent(id, inputs)`: validates required fields,
+  auth-guards when Supabase is configured, returns `demo` output when no key,
+  else runs Claude. Returns `{ ok, message, output?, demo? }`.
+- Admin: `components/admin/ai-tools.tsx` at `/admin/ai` (nav + ⌘K "A") —
+  generator picker by category, dynamic form, live/demo badge, copyable result.
+- Env: `ANTHROPIC_API_KEY` (server-only) + optional `AI_MODEL` in `.env.example`.
+  Build stays green with no key (provider only constructs the client at runtime).
+  NOTE: adding a generator = update `generators.ts` only.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -188,13 +205,14 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P7** Integrations — securely stored provider config (auth-only table, masked
   secrets) admin page for GA4, GTM, Google Business, Stripe, Twilio, Calendly,
   Zapier; plus GA4/GTM public tag injection via env vars.
+- **P8** AI tools — provider-abstracted content generators (service copy, FAQs,
+  blog, meta, local landing copy, alt text, review replies) via the Anthropic
+  Claude SDK, with templated demo output when no key is set.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-8. **AI tools** — provider-abstracted generators (service copy, FAQs, blog, meta,
-   alt text, review replies, city pages).
 10. **Multi-location** — per-location address/hours/phone/map/reviews/landing.
 6. **Client portal** — quotes approve, documents, appointments, invoices,
    messages, profile (payments-ready).
@@ -212,6 +230,5 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 8 (AI tools — provider-abstracted generators for service copy, FAQs,
-> blog, meta, alt text, review replies, city pages). Keep the build green and
-> preserve existing functionality."
+> Priority 10 (Multi-location — per-location address/hours/phone/map/reviews/
+> landing pages). Keep the build green and preserve existing functionality."

@@ -10,6 +10,7 @@ import {
   Palette,
   LayoutTemplate,
   Plug,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,5 +33,6 @@ export const adminNav: AdminNavItem[] = [
   { label: "Website", href: "/admin/website", icon: LayoutTemplate, shortcut: "W" },
   { label: "Theme", href: "/admin/theme", icon: Palette, shortcut: "T" },
   { label: "Integrations", href: "/admin/integrations", icon: Plug, shortcut: "I" },
+  { label: "AI tools", href: "/admin/ai", icon: Sparkles, shortcut: "A" },
   { label: "Settings", href: "/admin/settings", icon: Settings, shortcut: "S" },
 ];
