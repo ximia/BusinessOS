@@ -56,8 +56,13 @@ export function buildMetadata({
   };
 }
 
-/** JSON-LD LocalBusiness schema for the homepage. */
-export function localBusinessJsonLd() {
+/**
+ * JSON-LD LocalBusiness schema. Pass `areaServed` to scope it to a specific
+ * city (local landing pages); defaults to all configured service areas.
+ */
+export function localBusinessJsonLd(
+  areaServed: string[] = siteConfig.serviceAreas.map((a) => a.name)
+) {
   return {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -82,7 +87,7 @@ export function localBusinessJsonLd() {
             longitude: siteConfig.address.lng,
           }
         : undefined,
-    areaServed: siteConfig.serviceAreas.map((a) => a.name),
+    areaServed,
     sameAs: siteConfig.socials.map((s) => s.href),
     openingHoursSpecification: siteConfig.hours
       .filter((h) => !/closed/i.test(h.hours))
@@ -94,15 +99,33 @@ export function localBusinessJsonLd() {
   };
 }
 
-/** JSON-LD for a single service. */
-export function serviceJsonLd(name: string, description: string) {
+/** JSON-LD for a single service. Pass `areaServed` to scope it to a city. */
+export function serviceJsonLd(
+  name: string,
+  description: string,
+  areaServed: string[] = siteConfig.serviceAreas.map((a) => a.name)
+) {
   return {
     "@context": "https://schema.org",
     "@type": "Service",
     name,
     description,
     provider: { "@type": "LocalBusiness", name: siteConfig.companyName },
-    areaServed: siteConfig.serviceAreas.map((a) => a.name),
+    areaServed,
+  };
+}
+
+/** JSON-LD BreadcrumbList for a page's trail. */
+export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: absoluteUrl(item.path),
+    })),
   };
 }
 

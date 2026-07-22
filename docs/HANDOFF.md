@@ -126,6 +126,23 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   add-section menu, reset-to-default, unsaved-changes bar. NOTE: adding a section
   type requires updating BOTH `sections.catalog.ts` and `section-renderer.tsx`.
 
+### `src/features/local-seo/` — Local SEO (Priority 9)
+- `local-seo.ts` — pure, compile-time helpers over `serviceAreas` × `services`:
+  `areas()`, `getAreaBySlug`, `nearbyAreas`, and templated copy generators
+  (`cityIntro`, `cityServiceIntro`, `cityServiceFaq`, `localWhyUs`). Unique
+  per-page copy from real config (no thin/duplicate content).
+- Routes (all SSG via `generateStaticParams`):
+  `app/(marketing)/areas/page.tsx` (hub), `areas/[city]/page.tsx` (city landing,
+  lists all services), `areas/[city]/[service]/page.tsx` (the money pages —
+  N areas × M services). Falls back to 404 for unknown slugs.
+- JSON-LD helpers added to `lib/seo.ts`: `breadcrumbJsonLd`, plus optional
+  `areaServed` params on `serviceJsonLd` / `localBusinessJsonLd` (backward
+  compatible). City×service pages emit Service + FAQPage + BreadcrumbList;
+  city pages emit LocalBusiness + BreadcrumbList — all in the initial HTML.
+- Discovery/internal linking: homepage `service-area-section.tsx` links each
+  area to its landing page + "see all"; `sitemap.ts` includes the hub, all city
+  pages, and all city×service pages.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -147,12 +164,14 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P2** Website Builder — reorder / show-hide / duplicate / remove homepage
   sections (drag-drop + accessible controls), persisted to settings; homepage
   renders from the stored layout.
+- **P9** Local SEO — auto-generated city + city×service landing pages (SSG) with
+  localized copy, JSON-LD (Service / LocalBusiness / FAQPage / BreadcrumbList),
+  internal linking, and full sitemap coverage.
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
 ## ⏭ Remaining roadmap (in priority order)
-9. **Local SEO** — auto city/service landing pages, schema, sitemaps.
 7. **Integrations** page (Google, Stripe, Twilio, Calendly, GA, GTM, Zapier…),
    securely stored config.
 8. **AI tools** — provider-abstracted generators (service copy, FAQs, blog, meta,
@@ -174,5 +193,6 @@ Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
 > "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 9 (Local SEO — auto city/service landing pages, schema, sitemaps).
-> Keep the build green and preserve existing functionality."
+> Priority 7 (Integrations page — securely stored config for Google, Stripe,
+> Twilio, Calendly, GA, GTM, Zapier…). Keep the build green and preserve
+> existing functionality."
