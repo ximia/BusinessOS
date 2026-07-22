@@ -175,6 +175,19 @@ export interface Integration {
   updated_at: string;
 }
 
+export type OrgPlan = "starter" | "pro" | "agency";
+
+export interface Organization {
+  id: string;
+  name: string;
+  /** URL-safe slug — used as a subdomain (slug.example.com). */
+  slug: string;
+  /** Optional custom domain that maps to this org (white-label). */
+  custom_domain: string | null;
+  plan: OrgPlan;
+  created_at: string;
+}
+
 export type UserRole = "admin" | "staff" | "readonly";
 
 export interface Employee {

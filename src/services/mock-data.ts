@@ -9,6 +9,7 @@ import type {
   Post,
   Employee,
   Integration,
+  Organization,
 } from "@/types/database";
 
 /**
@@ -401,5 +402,29 @@ export const mockIntegrations: Integration[] = [
     enabled: false,
     config: { publishableKey: "pk_test_demo", secretKey: "sk_test_demo_secret" },
     updated_at: days(15),
+  },
+];
+
+/**
+ * Demo organizations (Multi-tenancy). A single-tenant install uses the first
+ * row; an agency managing several clients would see more. Members are the
+ * mockEmployees above (scoped to org "default" in demo).
+ */
+export const mockOrganizations: Organization[] = [
+  {
+    id: "org_default",
+    name: "Halcyon Detailing Co.",
+    slug: "halcyon",
+    custom_domain: "halcyondetailing.com",
+    plan: "pro",
+    created_at: days(400),
+  },
+  {
+    id: "org_northside",
+    name: "Northside Auto Spa",
+    slug: "northside",
+    custom_domain: null,
+    plan: "starter",
+    created_at: days(120),
   },
 ];

@@ -194,6 +194,29 @@ Built on the existing `leads` / `lead_notes` / `call_logs` / `follow_ups` tables
   column when multi-location. Single-location clones: leave one entry and the
   feature stays dormant (no hub link, no sitemap entries).
 
+### `src/features/tenant/` — White-label / multi-tenancy (Priority 11)
+- **Data (migration `0005_multi_tenancy.sql`):** `organizations` table
+  (name/slug/custom_domain/plan); `employees.user_id` link to auth; SQL helpers
+  `current_org_id()` / `current_user_role()` / `current_can_write()`; RLS
+  tightened from "any authenticated" to **org-scoped + role-aware** (readonly =
+  read-only) across leads (+ child activity via parent), quotes, reviews,
+  gallery, posts, employees, business_settings, integrations, organizations.
+  Seeds a default org and backfills `org_id`. Run it when you need >1 tenant.
+- `tenant.ts` — pure host→tenant helpers (`slugFromHost`, `normalizeHost`,
+  `PLAN_LABELS`). `roles.ts` — `can(role, capability)` matrix + labels.
+- `tenant.service.ts` — `getActiveOrg()` resolves by subdomain → custom domain →
+  membership (reads the `host` header directly; demo returns `DEMO_ORG`),
+  `getOrganizations()`, `getActiveMemberRole()` (demo = admin).
+- `tenant.actions.ts` — `updateOrganization` (manage_settings) + `setMemberRole`
+  (manage_members), role-guarded + demo-safe.
+- Admin: `components/admin/organization-manager.tsx` at `/admin/organization`
+  (nav + ⌘K "O") — org identity + custom domain, white-label pointers to
+  Settings/Theme, team roles with a capability legend, agency org list, and a
+  read-only banner for readonly members. `Organization`/`OrgPlan` types in
+  `types/database.ts`; org config surfaced via `getActiveOrg`.
+- NOTE: marketing pages stay single-brand-per-domain; per-org public read
+  scoping is left as a documented follow-up in the migration.
+
 ## Supabase
 Migrations in `supabase/migrations/`: `0001_init.sql` (9 tables + RLS + enums),
 `0002_business_settings.sql` (jsonb singleton row id='default'). `seed.sql`
@@ -227,14 +250,19 @@ To go live: run migrations, set env (`.env.example`), create an auth user.
 - **P10** Multi-location — config-driven per-location address/hours/phone/map/
   reviews + /locations hub and landing pages (SSG), per-location LocalBusiness
   schema, sitemap, and a conditional footer link.
+- **P11** White-label / multi-tenancy — `organizations` + org/role-aware RLS
+  (migration 0005), tenant resolution by host (subdomain / custom domain /
+  membership), role capabilities, and an admin Workspace page (org identity,
+  custom domain, team roles, agency org list).
 - Conversion kit (announcement, sticky CTA, floating call).
 - Security: Next.js patched to 15.5.21.
 - Docs: `README.md`, `docs/ARCHITECTURE.md`, this file.
 
-## ⏭ Remaining roadmap (in priority order)
-11. **White-label / multi-tenancy** — orgs, custom domains, roles, separate
-   storage (build on `org_id`).
-6. ~~**Client portal**~~ — descoped by the owner (not wanted).
+## ⏭ Remaining roadmap
+- All prioritized features are built. 🎉 Client portal (#6) is descoped.
+- Ongoing polish opportunities remain (see below): live wire-ups of the staged
+  admin writes/uploads/notifications, tests + CI, and the per-org public-read
+  scoping noted in migration 0005.
 - Ongoing per feature: UI polish, a11y, perf (target 95+ Lighthouse), remove the
   staged "wire-up" TODOs (admin writes, uploads, notifications, CSV import).
 
@@ -246,7 +274,8 @@ standard footer, push to the working branch. Don't create PRs unless asked.
 Don't put the model identifier in commits/PRs.
 
 ## How to resume in a new chat
-> "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`, then continue with
-> Priority 11 (White-label / multi-tenancy — orgs, roles, custom domains,
-> tenant-scoped storage on `org_id`). The client portal is descoped. Keep the
-> build green and preserve existing functionality."
+> "Read `docs/HANDOFF.md` and `docs/ARCHITECTURE.md`. The prioritized roadmap is
+> complete (client portal descoped). Pick up the ongoing polish: wire the staged
+> admin writes/uploads/notifications to Supabase, add tests + CI, and finish the
+> per-org public-read scoping noted in migration 0005. Keep the build green and
+> preserve existing functionality."
