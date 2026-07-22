@@ -1,12 +1,36 @@
-# LocalSite — Premium Multi-Industry Business Template
+# Business OS — Business Software for Local Service Businesses
 
-A production-grade website **and** admin dashboard template for local service
-businesses — mechanics, detailers, roofers, electricians, plumbers, HVAC, salons,
-barbershops, dentists, landscapers, and more. Built to be re-branded for a new
-client in **under 30 minutes** by editing config, not code.
+The master **Business OS** template that every client website is cloned from.
+One premium software product with two surfaces: a marketing **Website** (the
+frontend that wins customers) fused with a **Business Hub** (the operational
+backend that runs the business — leads, quotes, reviews, content, team,
+settings).
 
+Built for local service businesses — detailers, mechanics, roofers,
+electricians, plumbers, HVAC, salons, barbershops, dentists, landscapers, and
+more — and re-brandable for a new client in **under 30 minutes** by editing
+config, not code.
+
+> **We're not selling websites — we're selling business software.** The website
+> is the part of that software the customer sees.
+>
 > Demo content models a premium auto-detailing studio. Swap the config and it
 > becomes any local trade.
+
+### 📚 Start with the docs
+
+This README is the quick start. The authoritative foundation lives in
+[`CLAUDE.md`](./CLAUDE.md) (operating manual) and [`docs/`](./docs):
+[PRODUCT](./docs/PRODUCT.md) · [ROADMAP](./docs/ROADMAP.md) ·
+[ARCHITECTURE](./docs/ARCHITECTURE.md) · [UI_GUIDELINES](./docs/UI_GUIDELINES.md) ·
+[CODING_STANDARDS](./docs/CODING_STANDARDS.md) · [DATABASE](./docs/DATABASE.md) ·
+[API](./docs/API.md) · [DECISIONS](./docs/DECISIONS.md) ·
+[CHANGELOG](./docs/CHANGELOG.md) · [TODO](./docs/TODO.md).
+
+> **Where this code lives:** this is the *template*. Each client is an
+> independent clone with its own deployment, database, and domain. A separate
+> **Agency OS** (different repository) will communicate with each client instance
+> via secure APIs and webhooks — not part of this repo.
 
 ---
 

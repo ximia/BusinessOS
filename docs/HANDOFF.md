@@ -1,5 +1,13 @@
 # Project Handoff / Context Brief
 
+> **⚠️ Historical brief.** This file is preserved for context but is no longer
+> the authority. Start with [`CLAUDE.md`](../CLAUDE.md) and the [`docs/`](.)
+> system ([PRODUCT](./PRODUCT.md), [ARCHITECTURE](./ARCHITECTURE.md),
+> [ROADMAP](./ROADMAP.md), etc.). Where this file disagrees with those, they
+> win. In particular: the product is now framed as the **Business OS**, and the
+> working branch / roadmap below reflect an earlier session, not current
+> guidance (see `ROADMAP.md`).
+
 > **For a new chat session:** read this file + `docs/ARCHITECTURE.md`, then
 > continue the roadmap below. Everything needed to resume is here.
 
