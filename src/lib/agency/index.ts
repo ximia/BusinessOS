@@ -1,29 +1,26 @@
 /**
  * Agency Connector — public surface (barrel).
  *
- * The single entry point for the (currently dormant) Agency OS integration
- * foundation. Import from `@/lib/agency`, never from the internal files.
+ * The single entry point for the Agency OS integration. Import from
+ * `@/lib/agency`, never from the internal files.
  *
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │ WHAT THIS IS                                                             │
- * │ Phase 1 scaffolding that prepares Business OS to be *observed and        │
- * │ addressed* by a future, completely separate Agency OS — without adding   │
- * │ any dependency on it. It provides deployment/organization identity and   │
- * │ local health, version, and capability introspection.                     │
+ * │ The client-side connector that lets a completely separate Agency OS      │
+ * │ discover, monitor, and manage this deployment — through authenticated    │
+ * │ APIs (read-only) and signed outbound events. It provides identity,       │
+ * │ health/version/capabilities, self-registration, an event outbox, and     │
+ * │ diagnostics/heartbeat/self-test.                                          │
  * │                                                                          │
- * │ WHAT THIS IS NOT (by design, Phase 1)                                    │
- * │ No network requests. No APIs or route handlers. No webhooks. No          │
- * │ registration. No synchronization. No event publishing. The connector is  │
- * │ dormant and nothing in the app imports it, so Business OS behaves         │
- * │ exactly as it did before.                                                │
- * │                                                                          │
- * │ HOW IT WILL BE USED LATER                                                │
- * │ Future phases build the API layer, event pipeline, and auth *on top of*  │
- * │ these primitives — flipping capability flags on one at a time — while     │
- * │ this contract stays stable. Independence remains the invariant: the      │
- * │ connector may emit and answer, but Business OS must never require Agency  │
- * │ OS to function.                                                          │
+ * │ THE INVARIANT                                                            │
+ * │ Business OS NEVER depends on Agency OS. Everything here is optional and  │
+ * │ fail-safe: disabled or unreachable, Business OS runs exactly the same.   │
+ * │ There is no inbound mutating/command surface — Agency OS observes and     │
+ * │ addresses; it does not control.                                          │
  * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * Note: event publishing is exposed from `@/lib/agency/events` (`publishEvent`),
+ * kept separate so business logic imports only that one function.
  */
 
 import { createAgencyConnector } from "./connector";
@@ -32,8 +29,8 @@ import { createAgencyConnector } from "./connector";
 export { createAgencyConnector } from "./connector";
 
 /**
- * The default, environment-derived connector instance. Dormant in Phase 1.
- * Construction is side-effect free; reports are computed lazily on each call.
+ * The default, environment-derived connector instance. Construction is
+ * side-effect free; reports are computed lazily on each call.
  */
 export const agencyConnector = createAgencyConnector();
 
@@ -52,6 +49,19 @@ export {
 export { getHealthReport } from "./services/health.service";
 export { getVersionInfo } from "./services/version.service";
 export { getCapabilities } from "./services/capabilities.service";
+export { getBuildInfo } from "./services/build.service";
+export { getDeploymentMetadata } from "./services/metadata.service";
+export {
+  deriveDiagnosticState,
+  getConnectorDiagnostics,
+  getStatusReport,
+  getSyncState,
+  resolveConnectorStatus,
+} from "./services/diagnostics.service";
+export { runSelfTest } from "./services/self-test.service";
+
+/* ── Connection state ─────────────────────────────────────────────────────── */
+export { getConnectionState } from "./connection-state";
 
 /* ── Behavioral interfaces ────────────────────────────────────────────────── */
 export type {
@@ -62,26 +72,41 @@ export type {
 
 /* ── Data contracts (Zod-inferred types) ──────────────────────────────────── */
 export type {
+  BuildInfo,
   Capabilities,
+  ConnectionStateReport,
   ConnectorConfig,
+  ConnectorDiagnostics,
   ConnectorIdentity,
+  ConnectorStatusReport,
   DeploymentEnvironment,
   DeploymentIdentity,
+  DeploymentMetadata,
+  DiagnosticState,
   HealthReport,
   HealthStatus,
+  HeartbeatPayload,
   IntegrationCapabilities,
   ModuleCapability,
   OrganizationIdentity,
+  RegistrationStatusReport,
+  SelfTestReport,
+  StatusReport,
+  SyncStateReport,
   VersionInfo,
 } from "./schema";
 
-/* ── Zod schemas (for runtime validation at future boundaries) ────────────── */
+/* ── Zod schemas (for runtime validation at boundaries) ───────────────────── */
 export {
   capabilitiesSchema,
   connectorConfigSchema,
+  connectorDiagnosticsSchema,
   connectorIdentitySchema,
   deploymentIdentitySchema,
+  deploymentMetadataSchema,
   healthReportSchema,
   organizationIdentitySchema,
+  selfTestReportSchema,
+  statusReportSchema,
   versionInfoSchema,
 } from "./schema";

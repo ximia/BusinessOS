@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   deploymentEnvironmentSchema,
   healthStatusSchema,
+  heartbeatPayloadSchema,
   versionInfoSchema,
 } from "../schema";
 
@@ -28,6 +29,8 @@ export const eventSchemas = {
     deploymentId: z.string().min(1),
     version: versionInfoSchema,
   }),
+  /** Periodic heartbeat / health report (Phase 5). */
+  "deployment.heartbeat": heartbeatPayloadSchema,
   "health.changed": z.object({
     status: healthStatusSchema,
     previousStatus: healthStatusSchema.nullable(),
@@ -67,6 +70,7 @@ export type EventData<K extends EventName> = z.infer<(typeof eventSchemas)[K]>;
 export const eventVersions = {
   "deployment.registered": 1,
   "deployment.updated": 1,
+  "deployment.heartbeat": 1,
   "health.changed": 1,
   "lead.created": 1,
   "quote.created": 1,

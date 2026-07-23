@@ -95,9 +95,9 @@ None of these affect independence, demo mode, or the no-customer-data guarantee.
       (Phase 3), so a deployment re-announces once per cold start. Persist it for
       true cross-restart idempotency. Same write-context dependency (ADR-0011,
       ADR-0012).
-- [ ] **Outbox memory growth** — delivered/dead records are retained in the
-      in-memory map for the process lifetime. Add pruning/TTL (or rely on the
-      durable store) so long-lived processes don't accumulate.
+- [x] **Outbox memory growth** — *(Phase 5)* the in-memory outbox now prunes
+      terminal (`delivered`/`dead`) records beyond a cap so periodic heartbeats
+      can't grow it without bound. A durable store is still the long-term fix.
 - [ ] **Dead-letter handling** — events that exhaust retries or hit a terminal
       4xx are marked `dead` and kept, but there is **no inspection, requeue, or
       alerting** path. Add one when the durable outbox lands.
@@ -141,11 +141,12 @@ None of these affect independence, demo mode, or the no-customer-data guarantee.
       contract.
 
 ### Event producers & catalog
-- [ ] **Wire remaining event producers** — only `lead.created` and
-      `quote.created` are wired (contact/quote actions). Add `review.received`
-      (on review submit/approve), `deployment.updated` (on version/schema
-      change), `health.changed` (needs a health signal), `appointment.created`
-      (when scheduling exists), `backup.completed` (when backups exist).
+- [ ] **Wire remaining event producers** — wired so far: `lead.created`,
+      `quote.created` (contact/quote actions), `deployment.heartbeat` +
+      `health.changed` (heartbeat scheduler, Phase 5). Still to wire:
+      `review.received` (on review submit/approve), `deployment.updated` (on
+      version/schema change), `appointment.created` (when scheduling exists),
+      `backup.completed` (when backups exist).
 - [ ] **Emit `deployment.registered` event** on successful registration (today
       registration POSTs directly; it could also publish the event for a uniform
       event stream).

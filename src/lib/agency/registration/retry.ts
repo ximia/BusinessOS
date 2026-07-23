@@ -10,6 +10,8 @@
  * startup.
  */
 
+import { exponentialBackoff } from "../backoff";
+
 export interface RetryOptions {
   maxAttempts: number;
   baseDelayMs: number;
@@ -24,14 +26,6 @@ export interface RetryOptions {
 
 const defaultSleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Full-jitter exponential backoff, capped at `maxDelayMs`. */
-function backoffDelay(attempt: number, options: RetryOptions): number {
-  const exponential = options.baseDelayMs * 2 ** (attempt - 1);
-  const capped = Math.min(options.maxDelayMs, exponential);
-  const jitter = Math.random() * capped * 0.2;
-  return Math.round(capped + jitter);
-}
 
 export async function withRetry<T>(
   operation: () => Promise<T>,
@@ -48,7 +42,7 @@ export async function withRetry<T>(
       if (attempt >= options.maxAttempts || !options.isRetryable(error)) {
         throw error;
       }
-      const delayMs = backoffDelay(attempt, options);
+      const delayMs = exponentialBackoff(attempt, options);
       options.onRetry?.({ attempt, delayMs, error });
       await sleep(delayMs);
     }

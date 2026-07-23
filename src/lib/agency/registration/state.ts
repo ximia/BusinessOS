@@ -14,6 +14,8 @@
  * which is safe. A persistent backend can be swapped behind this module later.
  */
 
+import { ref } from "../global-state";
+
 export type RegistrationPhase =
   | "idle"
   | "skipped"
@@ -45,22 +47,26 @@ const initialState: RegistrationState = {
   skipReason: null,
 };
 
-let current: RegistrationState = { ...initialState };
+// Process-wide so the instrumentation and route contexts share one state.
+const state = ref<RegistrationState>("registration.state", () => ({
+  ...initialState,
+}));
 
 /** A defensive copy of the current registration state. */
 export function getRegistrationState(): RegistrationState {
-  return { ...current };
+  return { ...state.get() };
 }
 
 /** Merge a patch into the state and return the new snapshot. */
 export function setRegistrationState(
   patch: Partial<RegistrationState>
 ): RegistrationState {
-  current = { ...current, ...patch };
-  return { ...current };
+  const next = { ...state.get(), ...patch };
+  state.set(next);
+  return { ...next };
 }
 
 /** Reset to the initial state (primarily for tests). */
 export function resetRegistrationState(): void {
-  current = { ...initialState };
+  state.set({ ...initialState });
 }

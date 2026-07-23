@@ -10,6 +10,55 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0015 — Deployment becomes manageable: read-only management/diagnostics endpoints + heartbeat
+**Status:** Accepted · 2026-07
+
+**Decision:** Expose Business OS as a *managed deployment* through additional
+**read-only** endpoints (`/status`, `/metadata`, `/diagnostics`, `/self-test`)
+and a periodic **`deployment.heartbeat`** event, so Agency OS can build a
+dashboard, monitoring, version management, and diagnostics **without database
+access**. The connector derives one **diagnostic state** (`connector_disabled`,
+`pending_registration`, `registered`, `healthy`, `degraded`, `disconnected`,
+`authentication_failed`, `agency_unreachable`) from registration state, live
+connection state, and outbox depth.
+
+**Context:** Agency OS needs to discover/monitor/manage a fleet purely over
+authenticated APIs and signed events. Read snapshots + an emitted event stream
+are sufficient; Business OS stores no history (Agency OS assembles the timeline
+from events). Endpoints reuse the Phase 2 pipeline/envelope/auth — no
+duplication — and compose existing services.
+
+**Consequences:** The heartbeat reuses the event outbox (no new delivery path),
+is opt-in (enabled + deliverable), non-blocking, and self-scheduling. Capability
+flags now report what is built. Excluded by design (belong to Agency OS): remote
+commands, deployment updates, automation, billing, AI, DNS/SSL — Business OS is
+*observed and addressed*, never controlled. There is still no inbound mutating
+surface.
+
+---
+
+## ADR-0014 — Mutable connector state lives on `globalThis` (cross-bundle singletons)
+**Status:** Accepted · 2026-07
+
+**Decision:** Store mutable connector state — registration state, connection
+state, the event outbox, and the dispatcher's flush flag — on `globalThis`
+(via `src/lib/agency/global-state.ts`), not as plain module-level variables.
+
+**Context:** Next.js can evaluate a module as **separate instances** in different
+contexts — notably the `instrumentation` hook (which registers and heartbeats)
+versus route handlers (which serve diagnostics). With module-level state, the
+diagnostics endpoints read an empty copy and always report `pending_registration`
+even though registration and heartbeats succeeded (observed in `next start`
+testing). A process-wide singleton fixes this.
+
+**Consequences:** One state instance per process; diagnostics reflect the real
+outbound activity. Behavior is unchanged within a single context (so the earlier
+in-process Phase 3/4 tests still hold). The global flush flag also prevents the
+two contexts from flushing the shared outbox concurrently. This does not make
+state durable across restarts (that remains the durable-outbox item in `TODO.md`).
+
+---
+
 ## ADR-0013 — Event publishing via an outbox; `publishEvent()` is the only business-facing API
 **Status:** Accepted · 2026-07
 

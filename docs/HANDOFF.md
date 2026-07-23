@@ -17,7 +17,7 @@ starter** (Next.js). One codebase an agency clones per client; re-brand in ~30
 min by editing config or using the admin. Demo content = a premium auto-detailing
 studio ("Halcyon Detailing Co.").
 
-- **Repo:** `ximia/webtemp`
+- **Repo:** `ximia/BusinessOS` (formerly `ximia/webtemp`)
 - **Working branch:** `claude/multi-industry-website-template-5ipfou` (the repo's
   default branch; push here, never elsewhere).
 - **Deploy:** Vercel (auto-detects Next.js; Framework Preset must be Next.js).

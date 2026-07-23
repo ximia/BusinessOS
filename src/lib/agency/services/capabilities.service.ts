@@ -35,14 +35,19 @@ const MODULES: readonly ModuleCapability[] = [
 ];
 
 /**
- * Agency-integration capabilities. All false in Phase 1 — nothing is wired to
- * Agency OS. This object is the checklist later phases turn on, one at a time.
+ * Agency-integration capabilities — what this deployment can do with Agency OS.
+ * Reflects what is actually built: registration (P3), event publishing (P4),
+ * metrics + health/diagnostics reporting (P2/P5). `inboundWebhooks` and
+ * `remoteConfig` remain false — no inbound/mutating surface exists yet. Agency OS
+ * negotiates on these flags, so they must stay accurate.
  */
 const INTEGRATION: IntegrationCapabilities = {
-  registration: false,
-  eventPublishing: false,
+  registration: true,
+  eventPublishing: true,
   inboundWebhooks: false,
-  metricsReporting: false,
+  metricsReporting: true,
+  healthReporting: true,
+  diagnostics: true,
   remoteConfig: false,
 };
 

@@ -260,6 +260,16 @@ the **client-side seam**:
   system with an outbox (`src/lib/agency/events`) are both **built**. Business
   logic calls only `publishEvent()`; the outbox/dispatcher own delivery, retries,
   and dead-lettering. Neither ever blocks or prevents startup/operation.
+- **Management & diagnostics (built):** read-only endpoints
+  (`status`, `metadata`, `diagnostics`, `self-test`) plus a periodic
+  `deployment.heartbeat` event let Agency OS discover, monitor, and diagnose a
+  deployment without database access. The connector derives a single diagnostic
+  state (healthy/degraded/disconnected/…) from registration, live connection
+  state, and outbox depth.
+- **Cross-bundle state:** mutable connector state (registration, connection,
+  outbox) lives on `globalThis` (`src/lib/agency/global-state.ts`) so the
+  `instrumentation` context (which registers + heartbeats) and the route
+  handlers (which report diagnostics) share one instance per process.
 - **Inbound receiver (future):** a route handler under `app/api/agency/v1/` will
   accept authenticated Agency OS callbacks — the first *mutating* handler.
 - **The services layer is the boundary.** Read/sync logic goes through

@@ -1,3 +1,4 @@
+import { singleton } from "../global-state";
 import type { EventEnvelope } from "./envelope";
 
 /**
@@ -42,9 +43,32 @@ export interface OutboxStore {
   clear(): void;
 }
 
+/**
+ * Cap on retained records. Terminal records (`delivered`/`dead`) beyond this cap
+ * are pruned oldest-first so a long-lived process emitting periodic events (e.g.
+ * heartbeats) cannot grow the outbox without bound. Active records
+ * (`pending`/`delivering`) are never pruned.
+ */
+const MAX_RETAINED_RECORDS = 500;
+
 export function createInMemoryOutbox(): OutboxStore {
   const records = new Map<string, OutboxRecord>();
   const seenKeys = new Set<string>();
+
+  /** Drop oldest terminal records (and their dedup keys) above the cap. */
+  function prune(): void {
+    if (records.size <= MAX_RETAINED_RECORDS) return;
+    const terminal = [...records.values()]
+      .filter((r) => r.status === "delivered" || r.status === "dead")
+      .sort((a, b) => a.enqueuedAt - b.enqueuedAt);
+    let overflow = records.size - MAX_RETAINED_RECORDS;
+    for (const record of terminal) {
+      if (overflow <= 0) break;
+      records.delete(record.event.id);
+      seenKeys.delete(record.event.idempotencyKey);
+      overflow -= 1;
+    }
+  }
 
   return {
     enqueue(event) {
@@ -61,6 +85,7 @@ export function createInMemoryOutbox(): OutboxStore {
         nextAttemptAt: now,
         lastError: null,
       });
+      prune();
       return { enqueued: true, duplicate: false };
     },
     due(now) {
@@ -93,5 +118,5 @@ export function createInMemoryOutbox(): OutboxStore {
   };
 }
 
-/** The process-wide outbox instance. */
-export const outbox: OutboxStore = createInMemoryOutbox();
+/** The process-wide outbox instance (shared across bundles via globalThis). */
+export const outbox: OutboxStore = singleton("events.outbox", createInMemoryOutbox);

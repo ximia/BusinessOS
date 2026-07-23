@@ -1,5 +1,6 @@
 import { getConnectorConfig } from "../config";
 import { ENV } from "../constants";
+import { joinUrl } from "../url";
 
 /**
  * Agency registration — configuration.
@@ -42,10 +43,6 @@ function skip(reason: string): RegistrationConfig {
     endpointUrl: null,
     outboundKey: null,
   };
-}
-
-function joinUrl(base: string, path: string): string {
-  return `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
 export function getRegistrationConfig(): RegistrationConfig {

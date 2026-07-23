@@ -8,7 +8,16 @@
  * own equivalent.
  *
  * Edge-safe: uses only `fetch` / `AbortController` (no `node:*` imports).
+ *
+ * Every attempt records its outcome into the connection-state tracker so the
+ * diagnostics layer always knows the live connectivity to Agency OS.
  */
+
+import {
+  classifyStatus,
+  recordContactFailure,
+  recordContactSuccess,
+} from "./connection-state";
 
 export class AgencyDeliveryError extends Error {
   readonly retryable: boolean;
@@ -58,17 +67,26 @@ export async function postSigned(
       cache: "no-store",
     });
 
-    if (response.ok) return { status: response.status };
+    if (response.ok) {
+      recordContactSuccess(response.status);
+      return { status: response.status };
+    }
 
     const retryable = response.status >= 500 || response.status === 429;
+    recordContactFailure(
+      classifyStatus(response.status),
+      response.status,
+      `HTTP ${response.status}`
+    );
     throw new AgencyDeliveryError(
       `Agency OS responded with ${response.status}`,
       retryable,
       response.status
     );
   } catch (error) {
-    if (error instanceof AgencyDeliveryError) throw error;
+    if (error instanceof AgencyDeliveryError) throw error; // already recorded
     const message = error instanceof Error ? error.message : "network error";
+    recordContactFailure("unreachable", null, message);
     throw new AgencyDeliveryError(message, true);
   } finally {
     clearTimeout(timeout);

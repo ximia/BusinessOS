@@ -1,5 +1,6 @@
 import { getConnectorConfig } from "../config";
 import { ENV } from "../constants";
+import { joinUrl } from "../url";
 
 /**
  * Agency events — delivery configuration.
@@ -35,10 +36,6 @@ function skip(reason: string): EventsConfig {
     endpointUrl: null,
     outboundKey: null,
   };
-}
-
-function joinUrl(base: string, path: string): string {
-  return `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
 export function getEventsConfig(): EventsConfig {

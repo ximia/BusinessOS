@@ -71,4 +71,10 @@ export const ENV = {
    * `DEFAULT_EVENTS_PATH` in the events config.
    */
   EVENTS_PATH: "AGENCY_OS_EVENTS_PATH",
+  /**
+   * Optional heartbeat interval in milliseconds (Phase 5). When the connector is
+   * enabled and can deliver, a periodic `deployment.heartbeat` event is emitted.
+   * Defaults to `DEFAULT_HEARTBEAT_INTERVAL_MS`; clamped to a sane minimum.
+   */
+  HEARTBEAT_INTERVAL: "AGENCY_HEARTBEAT_INTERVAL_MS",
 } as const;

@@ -1,26 +1,25 @@
-# `src/lib/agency` — Agency Connector (Phase 1: dormant foundation)
+# `src/lib/agency` — Agency Connector
 
-This module prepares Business OS to be **observed and addressed** by a future,
-completely separate **Agency OS** — without adding any dependency on it.
+The client-side connector that lets a completely separate **Agency OS**
+**discover, monitor, and manage** this deployment — through authenticated,
+read-only APIs and signed outbound events.
 
 > **Independence is the invariant.** Business OS must run identically whether
-> Agency OS exists, is offline, or is disabled. This module never breaks that.
+> Agency OS exists, is offline, or is disabled. Every part of this module is
+> optional and fail-safe; disabled (the default) it is a complete no-op.
 
-## Dormancy contract (Phase 1)
+## What it does (and never does)
 
-This module **does not**, and in Phase 1 never will:
+**Does:** local identity/health/version/capabilities introspection; a read-only
+management API (health, version, capabilities, metrics, status, metadata,
+diagnostics, self-test); outbound self-registration; a versioned event system
+with an outbox; a periodic heartbeat; and a derived diagnostic state.
 
-- make network requests,
-- expose APIs or route handlers,
-- send or receive webhooks,
-- register with Agency OS,
-- publish events, or
-- synchronize any data.
-
-It only **describes the deployment locally**: identity, health, version, and
-capabilities — computed in-process, on demand, from environment + constants.
-**Nothing in the running application imports it**, so the app behaves exactly as
-it did before this code existed.
+**Never does:** depend on Agency OS to function; expose an inbound *mutating*
+surface; accept remote commands; perform deployment updates, automation,
+billing, AI, or DNS/SSL. Agency OS *observes and addresses* — it does not
+control. Business logic touches only `publishEvent()` (from
+`@/lib/agency/events`); everything else is the connector's own concern.
 
 ## What's here
 
@@ -40,8 +39,16 @@ it did before this code existed.
 | `api/` | Read-only Agency API layer (Phase 2): `auth`, `response`, `handler`, `schema`. |
 | `log.ts` | Scoped `[agency:<scope>]` logger (no secrets/PII). |
 | `registration/` | Outbound self-registration (Phase 3): `config`, `payload`, `client`, `retry`, `state`, orchestrator. |
-| `outbound.ts` | Shared signed-`POST` primitive (used by event delivery). |
+| `outbound.ts` | Shared signed-`POST` primitive (records connection state). |
+| `backoff.ts` / `url.ts` | Shared exponential-backoff + URL-join helpers. |
+| `connection-state.ts` | Live last-outbound-contact tracker (feeds diagnostics). |
+| `global-state.ts` | `globalThis`-backed singletons shared across bundles (ADR-0014). |
 | `events/` | Versioned event system + outbox (Phase 4): `registry`, `envelope`, `outbox`, `config`, `dispatcher`, `publishEvent`. |
+| `heartbeat.ts` | Periodic `deployment.heartbeat` scheduler (Phase 5). |
+| `services/build.service.ts` | Build/runtime provenance. |
+| `services/metadata.service.ts` | Deployment + version + build + modules bundle. |
+| `services/diagnostics.service.ts` | Diagnostic state + status/sync/diagnostics reports. |
+| `services/self-test.service.ts` | Connector self-test (optional connectivity probe). |
 
 ### Phase 2 — read-only Agency API (implemented)
 
@@ -88,21 +95,42 @@ only (**no PII**). Default outbox is in-memory (per process) behind an
 `/api/v1/events`). Delivery reuses `AGENCY_OUTBOUND_API_KEY`. See `docs/API.md`
 §2c and `docs/DECISIONS.md` ADR-0013.
 
-## Configuration (all optional; unset ⇒ dormant + standalone)
+### Phase 5 — management, diagnostics & heartbeat (implemented)
+
+Makes the deployment *manageable*: read-only endpoints `GET
+/api/agency/v1/{status,metadata,diagnostics,self-test}` (reusing the Phase 2
+pipeline) let Agency OS build a dashboard, monitoring, version management, and
+diagnostics with **no database access**. The connector derives a single
+**diagnostic state** (`connector_disabled` / `pending_registration` /
+`registered` / `healthy` / `degraded` / `disconnected` / `authentication_failed`
+/ `agency_unreachable`) from registration state, live connection state, and
+outbox depth. A periodic **`deployment.heartbeat`** event provides periodic
+health reporting (via the existing outbox). Mutable state is shared across the
+instrumentation and route contexts via `globalThis` (ADR-0014). No inbound
+mutating surface; no remote commands/updates/automation. See `docs/API.md`
+§2a-2 and `docs/DECISIONS.md` ADR-0014/0015.
+
+**Heartbeat env var:** `AGENCY_HEARTBEAT_INTERVAL_MS` (optional; default 5 min).
+
+## Configuration (all optional; unset ⇒ connector disabled + fully standalone)
 
 | Env var | Meaning |
 |---|---|
-| `AGENCY_OS_ENABLED` | Master switch. Unset/false ⇒ dormant. (No behavioral effect in Phase 1.) |
-| `AGENCY_OS_BASE_URL` | Agency OS location. Stored for later; **unused in Phase 1**. |
+| `AGENCY_OS_ENABLED` | Master switch. Unset/false ⇒ disabled (full no-op). |
+| `AGENCY_OS_BASE_URL` | Agency OS location (for registration + event/heartbeat delivery). |
 | `AGENCY_OS_ENVIRONMENT` | `production` \| `preview` \| `development` (else inferred). |
 | `BUSINESS_OS_DEPLOYMENT_ID` | Stable identity of this deployment (the clone). |
 | `BUSINESS_OS_ORG_ID` | Stable identity of the business this deployment serves. |
 | `BUSINESS_OS_ORG_SLUG` | Human-friendly org slug. |
+| `AGENCY_INBOUND_API_KEY` | Secret Agency OS presents to call the read-only API. Server-only. |
+| `AGENCY_OUTBOUND_API_KEY` | Secret Business OS presents to Agency OS (registration + events). Server-only. |
+| `AGENCY_OS_REGISTER_PATH` / `AGENCY_OS_EVENTS_PATH` | Optional endpoint path overrides. |
+| `AGENCY_HEARTBEAT_INTERVAL_MS` | Optional heartbeat cadence (default 300000). |
 
-## How later phases build on this
+## The boundary this respects
 
-Future phases add the API layer, machine authentication, event pipeline, and
-registration **on top of** these primitives — flipping the `integration.*`
-capability flags on one at a time — while the contract shapes here stay stable.
-See `docs/API.md` §4 and `docs/DECISIONS.md` (ADR-0005/0007) for the boundary
-this respects.
+Everything here is the **client-side seam** only. The Agency OS itself is a
+separate product in a separate repository; no Agency OS internals live here. The
+remaining connector work (durable outbox, auth hardening, the inbound mutating
+receiver) is tracked in `docs/TODO.md`; the boundary rationale is in
+`docs/DECISIONS.md` (ADR-0005/0007/0010/0015).

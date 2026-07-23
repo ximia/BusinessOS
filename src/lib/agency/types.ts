@@ -19,14 +19,14 @@ import type {
   VersionInfo,
 } from "./schema";
 
-/** The connector's operating mode. Phase 1 is always `dormant`. */
-export type ConnectorMode = "dormant";
+/** The connector's operating mode: `active` when enabled, else `dormant`. */
+export type ConnectorMode = "dormant" | "active";
 
 /** A snapshot describing whether/how the connector is operating. */
 export interface ConnectorStatus {
-  /** Reflects the `AGENCY_OS_ENABLED` switch. Has no behavioral effect yet. */
+  /** Reflects the `AGENCY_OS_ENABLED` switch. */
   enabled: boolean;
-  /** Always `dormant` in Phase 1 — the connector never acts on its own. */
+  /** `active` when the connector communicates with Agency OS, else `dormant`. */
   mode: ConnectorMode;
   /** Human-readable explanation of why the connector is in this mode. */
   reason: string;

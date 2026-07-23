@@ -123,6 +123,36 @@ later phase — they matter most for mutating surfaces, which don't exist yet.)
 
 ---
 
+## 2a-2. Management & diagnostics endpoints (implemented; read-only)
+
+Phase 5 adds four authenticated, read-only endpoints so Agency OS can build a
+deployment dashboard, monitoring, version management, and diagnostics **without
+any database access**. They reuse the same pipeline, envelope, auth, and
+validation as §2a (no duplication) and compose existing connector services.
+
+| Endpoint | Returns | Agency OS use |
+|---|---|---|
+| `/api/agency/v1/status` | Compact: the single diagnostic `state`, connector mode, registration phase, last-contact time, uptime. | Dashboard list + uptime monitoring (poll frequently). |
+| `/api/agency/v1/diagnostics` | Full: `state` + connector status + registration status + synchronization (outbox depth) + connection state + health. | Deployment diagnostics detail view. |
+| `/api/agency/v1/metadata` | Deployment metadata + version metadata (incl. schema version) + build info + installed modules. | Dashboard card + version management. |
+| `/api/agency/v1/self-test` | Per-check results (pass/warn/fail/skip) + overall. `?probe=1` adds a live Agency connectivity check. | Diagnostics / onboarding verification. |
+
+**Diagnostic state** (`/status`, `/diagnostics`) is one of: `connector_disabled`,
+`pending_registration`, `registered`, `healthy`, `degraded`, `disconnected`,
+`authentication_failed`, `agency_unreachable` — derived locally from
+registration state, live connection state (last outbound contact), and outbox
+depth. This is the single field Agency OS keys dashboards and alerts off.
+
+**Deployment timeline** is assembled by Agency OS from the events it receives
+(`deployment.registered`, `deployment.heartbeat`, `health.changed`, …) plus
+these snapshots — Business OS stores no history, so there is no timeline endpoint.
+
+The capability flags in `/capabilities` now reflect what is built:
+`registration`, `eventPublishing`, `metricsReporting`, `healthReporting`,
+`diagnostics` = true; `inboundWebhooks`, `remoteConfig` = false.
+
+---
+
 ## 2b. Outbound self-registration (implemented)
 
 The **first outbound call** in the codebase. On server start, a deployment
@@ -164,9 +194,11 @@ OS. Lives in `src/lib/agency/events`. **Business logic calls only
 - **Versioned events.** Each event has a Zod schema + version in the catalog
   (`events/registry.ts`), carried on the envelope (`specVersion` for the
   envelope format, `version` for the payload). Current catalog:
-  `deployment.registered`, `deployment.updated`, `health.changed`,
-  `lead.created`, `quote.created`, `appointment.created`, `review.received`,
-  `backup.completed`.
+  `deployment.registered`, `deployment.updated`, `deployment.heartbeat`,
+  `health.changed`, `lead.created`, `quote.created`, `appointment.created`,
+  `review.received`, `backup.completed`. A periodic `deployment.heartbeat`
+  (Phase 5) is emitted on an interval by the heartbeat scheduler when enabled —
+  the "periodic health reporting" signal Agency OS uses for liveness/uptime.
 - **`publishEvent()` contract:** validates the payload (Zod), wraps it in an
   envelope, writes to the **outbox**, kicks the dispatcher, and returns. It
   **never throws**, never blocks, is a **no-op when the connector is disabled**,

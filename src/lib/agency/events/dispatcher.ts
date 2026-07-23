@@ -1,3 +1,5 @@
+import { exponentialBackoff } from "../backoff";
+import { ref } from "../global-state";
 import { createLogger } from "../log";
 import { AgencyDeliveryError, postSigned } from "../outbound";
 import {
@@ -22,15 +24,10 @@ import { outbox } from "./outbox";
 
 const log = createLogger("events");
 
-let flushing = false;
+// Shared across bundles so the instrumentation and route contexts don't flush
+// the same shared outbox concurrently. The retry timer stays context-local.
+const flushing = ref<boolean>("events.flushing", () => false);
 let timer: ReturnType<typeof setTimeout> | null = null;
-
-/** Exponential backoff with full jitter, capped at `maxDelayMs`. */
-function backoffDelay(attempt: number): number {
-  const exponential = EVENT_RETRY_POLICY.baseDelayMs * 2 ** (attempt - 1);
-  const capped = Math.min(EVENT_RETRY_POLICY.maxDelayMs, exponential);
-  return Math.round(capped + Math.random() * capped * 0.2);
-}
 
 async function deliver(
   event: EventEnvelope,
@@ -56,12 +53,12 @@ async function deliver(
  * calls collapse into the in-flight run (a follow-up is re-scheduled at the end).
  */
 export async function flush(): Promise<void> {
-  if (flushing) return;
+  if (flushing.get()) return;
 
   const config = getEventsConfig();
   if (!config.canDeliver) return; // Safe-fail: events stay queued.
 
-  flushing = true;
+  flushing.set(true);
   try {
     const due = outbox.due(Date.now());
     for (const record of due) {
@@ -95,7 +92,7 @@ export async function flush(): Promise<void> {
             { id: record.event.id }
           );
         } else {
-          const delayMs = backoffDelay(attempt);
+          const delayMs = exponentialBackoff(attempt, EVENT_RETRY_POLICY);
           outbox.update(record.event.id, {
             status: "pending",
             attempts: attempt,
@@ -110,7 +107,7 @@ export async function flush(): Promise<void> {
       }
     }
   } finally {
-    flushing = false;
+    flushing.set(false);
     scheduleNext();
   }
 }

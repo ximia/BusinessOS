@@ -1,14 +1,14 @@
+import { AgencyDeliveryError, postSigned } from "../outbound";
 import { REQUEST_TIMEOUT_MS, type RegistrationConfig } from "./config";
 import type { RegistrationPayload } from "./payload";
 
 /**
  * Agency registration — outbound HTTP client.
  *
- * The single place in Business OS that makes an outbound call to Agency OS. It
- * is a plain, timed `POST`; it classifies failures as retryable (network/timeout
- * /5xx/429) or terminal (other 4xx, e.g. a bad key) and surfaces that via
- * {@link RegistrationError}. It performs no retries itself — that is the caller's
- * concern (see `./retry.ts`).
+ * Delegates the actual request to the shared `postSigned` primitive (which
+ * classifies failures and records connection state) and re-wraps its error as a
+ * {@link RegistrationError} so the registration orchestrator's retry logic is
+ * unchanged. Behavior is identical to the original inline implementation.
  */
 
 export class RegistrationError extends Error {
@@ -41,39 +41,24 @@ export async function sendRegistration(
     throw new RegistrationError("registration not configured", false);
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
   try {
-    const response = await fetch(config.endpointUrl, {
-      method: "POST",
+    const { status } = await postSigned({
+      url: config.endpointUrl,
+      apiKey: config.outboundKey,
+      body: payload,
       headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${config.outboundKey}`,
         "x-idempotency-key": idempotencyKey,
         "x-business-os-deployment": payload.deployment.id,
         "x-business-os-contract": payload.contractVersion,
       },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-      cache: "no-store",
+      timeoutMs: REQUEST_TIMEOUT_MS,
     });
-
-    if (response.ok) return { status: response.status };
-
-    // 5xx and 429 are worth retrying; other 4xx are terminal (fix config first).
-    const retryable = response.status >= 500 || response.status === 429;
-    throw new RegistrationError(
-      `Agency OS responded with ${response.status}`,
-      retryable,
-      response.status
-    );
+    return { status };
   } catch (error) {
-    if (error instanceof RegistrationError) throw error;
-    // Network error or abort/timeout — transient, so retryable.
+    if (error instanceof AgencyDeliveryError) {
+      throw new RegistrationError(error.message, error.retryable, error.status);
+    }
     const message = error instanceof Error ? error.message : "network error";
     throw new RegistrationError(message, true);
-  } finally {
-    clearTimeout(timeout);
   }
 }

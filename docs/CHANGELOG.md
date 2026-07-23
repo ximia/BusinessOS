@@ -49,8 +49,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quote.created`, `appointment.created`, `review.received`, `backup.completed`
   (operational payloads only — no PII). Demonstrated by wiring `lead.created`
   and `quote.created` into the contact/quote server actions.
+- **Agency management & diagnostics (Phase 5).** Business OS is now a *managed
+  deployment*. New read-only authenticated endpoints `GET
+  /api/agency/v1/{status,metadata,diagnostics,self-test}` expose connector
+  status, a derived diagnostic state (registered/healthy/degraded/disconnected/
+  authentication_failed/agency_unreachable/pending_registration/
+  connector_disabled), registration status, synchronization/outbox state, live
+  connection state, deployment + version + build metadata, installed modules, and
+  a connector self-test (with optional live connectivity probe). A periodic
+  `deployment.heartbeat` event (+ `health.changed` on transitions) provides
+  periodic health reporting via the existing outbox. All operational-only (no
+  PII), Zod-validated, versioned under `/v1`. Capability flags now report what is
+  built. No inbound/mutating surface; no remote commands, updates, automation,
+  billing, AI, or DNS/SSL (those belong to Agency OS).
 
 ### Changed
+- **Audit refactors (behavior-preserving).** De-duplicated the outbound HTTP
+  client (registration now delegates to the shared `postSigned`), exponential
+  backoff (`backoff.ts`), and URL join (`url.ts`); added a connection-state
+  tracker fed by every outbound call; bounded the in-memory outbox (prunes
+  terminal records) so periodic heartbeats can't grow it without bound; and moved
+  mutable connector state onto `globalThis` so the instrumentation and route
+  contexts share it (see `DECISIONS.md` ADR-0014). Connector status `mode` now
+  reports `active`/`dormant` accurately.
 - **Product direction:** repositioned from "multi-industry website + admin
   template" to the **Business OS** — business software for local service
   businesses (Website frontend + Business Hub backend). See `docs/PRODUCT.md`
