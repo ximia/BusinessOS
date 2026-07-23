@@ -100,6 +100,14 @@ fully wired (tracked in `TODO.md`).
   instance uses to communicate with the separate Agency OS. Versioned,
   authenticated, outbound-first. (The Agency OS itself is a different repo and
   is out of scope here — see `API.md` and `DECISIONS.md`.)
+  - **Built (Phases 1–4):** dormant connector foundation + identity (P1),
+    read-only Agency API (P2), outbound self-registration (P3), versioned event
+    system + outbox (P4).
+  - **Remaining for the contract:** durable outbox + persisted registration
+    state, authorized read context (ADR-0011), auth hardening (HMAC signing,
+    replay defense, key rotation, mutual auth), the inbound webhook receiver
+    (first mutating handler), and the remaining event producers. All enumerated
+    under **"Agency OS connector — deferred items & caveats"** in `TODO.md`.
 - Role enforcement in UI and RLS (`admin` / `staff` / `readonly`).
 
 ---
@@ -114,6 +122,12 @@ fully wired (tracked in `TODO.md`).
 - **Payments & invoicing** depth beyond the portal.
 - Testing + CI as a standing gate (Vitest/Playwright smoke tests, GitHub
   Actions build check).
+- **Fleet management** (architecture-review findings) — template propagation /
+  orchestrated upgrades across many clones, a migration runner + per-deployment
+  `schema_migrations` version, and independence enforced as a build-time
+  invariant. Detailed in `TODO.md`.
+- **Durable connector infrastructure** — Supabase-backed event outbox + persisted
+  registration state + a serverless-safe drain trigger (see `TODO.md`).
 
 ---
 
