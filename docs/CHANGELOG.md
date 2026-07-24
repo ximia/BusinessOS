@@ -63,6 +63,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   built. No inbound/mutating surface; no remote commands, updates, automation,
   billing, AI, or DNS/SSL (those belong to Agency OS).
 
+### Fixed
+- **Business Hub opaque 500.** Added `error.tsx` + `loading.tsx` to the
+  `admin/(dashboard)` segment. When Supabase is configured but a data read fails
+  (e.g. the schema migrations haven't been run, or RLS denies access), the admin
+  pages previously crashed with an opaque "Application error" white screen; they
+  now render a helpful message with the error digest (for log lookup) and a
+  retry. Unrelated to the Agency connector work — no page/component/service in
+  the render path imports it.
+
 ### Changed
 - **Audit refactors (behavior-preserving).** De-duplicated the outbound HTTP
   client (registration now delegates to the shared `postSigned`), exponential

@@ -26,7 +26,10 @@ the next release is persistence.
       action (currently parses → toast only).
 - [ ] **Blog save/publish** — persist the editor to `posts`; handle
       `scheduled` → `published`.
-- [ ] **Error/loading boundaries** — `error.tsx` / `loading.tsx` per Hub segment.
+- [x] **Error/loading boundaries** — `error.tsx` + `loading.tsx` added to the
+      `admin/(dashboard)` segment (covers all Hub data pages): a failing Supabase
+      read now shows a helpful page with the error digest instead of an opaque
+      500. Extend to other segments (marketing) as needed.
 - [ ] **`useFormState` → `useActionState`** in `admin/login/page.tsx` (React 19).
 
 ---
