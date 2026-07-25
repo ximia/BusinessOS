@@ -10,6 +10,39 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0016 — Finalized Agency contract: bearer v1 push + read-only pull, observe-only
+
+**Status:** Accepted.
+
+**Decision.** The Business OS ↔ Agency OS integration contract is finalized as
+exactly two authenticated lanes, both keyed by `deployment_id` and both using a
+shared **bearer** credential:
+
+1. **Push (this connector → Agency OS):** `POST /api/v1/deployments/register`
+   and `POST /api/v1/events`, authenticated with `AGENCY_OUTBOUND_API_KEY`.
+2. **Pull (Agency OS → this deployment):** the read-only `GET /api/agency/v1/*`
+   endpoints, authenticated with `AGENCY_INBOUND_API_KEY`.
+
+The integration is **observe + address only** — this deployment exposes **no
+inbound mutating/command surface**, preserving the connector's founding
+invariant (ADR-0005/0010/0015): Agency OS observes and addresses, it does not
+control.
+
+**Context.** On the Agency OS side, a second inbound variant had been built —
+HMAC-signed events + a shared provisioning token at `/api/business-os/*`, keyed
+by `external_id`. This connector never signed events, never sent a provisioning
+token, and never used `external_id`, so that variant had no counterpart here and
+no caller. It has now been **removed on the Agency side** (Agency OS
+ADR-0015), leaving the bearer v1 endpoints as the single inbound contract. No
+change was required in this repository — the connector already spoke exactly
+this contract.
+
+**Consequences.** One identity, one auth model, one push lane and one pull lane
+across both systems. The deferred **HMAC request signing** item (`docs/TODO.md`)
+remains a deliberate future hardening for *if and when* a mutating surface is
+ever introduced — it is not a half-built path. Nothing in `src/lib/agency`
+changes.
+
 ## ADR-0015 — Deployment becomes manageable: read-only management/diagnostics endpoints + heartbeat
 **Status:** Accepted · 2026-07
 
