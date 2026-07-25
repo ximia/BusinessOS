@@ -17,11 +17,11 @@ export const APP_VERSION = "1.0.0";
 
 /**
  * Monotonic database schema version. Corresponds to the highest-numbered file
- * in `supabase/migrations/` (currently `0002_business_settings.sql`). Bump this
- * whenever a new migration ships. Lets Agency OS know a deployment's schema
- * shape without ever touching its database.
+ * in `supabase/migrations/` (currently `0003_agency_connector_settings.sql`).
+ * Bump this whenever a new migration ships. Lets Agency OS know a deployment's
+ * schema shape without ever touching its database.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * The version of the *connector contract* — the shape of the health, version,

@@ -1,4 +1,5 @@
 import { ENV } from "./constants";
+import { autoDeriveDeploymentId, getConnectorOverlay } from "./settings";
 import {
   connectorConfigSchema,
   type ConnectorConfig,
@@ -63,14 +64,24 @@ function resolveEnvironment(): DeploymentEnvironment {
  *          environment is empty or fails validation.
  */
 export function getConnectorConfig(): ConnectorConfig {
+  // Admin-editable overlay (from the Business Hub) takes precedence over env;
+  // env is the fleet-wide default; identity auto-derives when neither is set.
+  // NULL overlay fields inherit — note `false ?? x === false`, so an admin who
+  // switches the connector OFF is respected over an env `enabled=true`.
+  const overlay = getConnectorOverlay();
+
   const raw = {
-    enabled: process.env[ENV.ENABLED],
+    enabled: overlay?.enabled ?? process.env[ENV.ENABLED],
+    // Shared, fleet-wide, and secret-adjacent: always env, never overlaid.
     agencyBaseUrl: process.env[ENV.BASE_URL] || undefined,
-    deploymentId: process.env[ENV.DEPLOYMENT_ID] || undefined,
+    deploymentId:
+      overlay?.deploymentId ||
+      process.env[ENV.DEPLOYMENT_ID] ||
+      autoDeriveDeploymentId(),
     environment: resolveEnvironment(),
     organization: {
-      id: process.env[ENV.ORG_ID] || undefined,
-      slug: process.env[ENV.ORG_SLUG] || undefined,
+      id: overlay?.organizationId || process.env[ENV.ORG_ID] || undefined,
+      slug: overlay?.organizationSlug || process.env[ENV.ORG_SLUG] || undefined,
     },
   };
 

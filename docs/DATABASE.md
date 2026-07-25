@@ -15,6 +15,7 @@
   edit a shipped migration — add a new one.
   - `0001_init.sql` — core schema, enums, RLS, `updated_at` triggers.
   - `0002_business_settings.sql` — JSONB settings singleton.
+  - `0003_agency_connector_settings.sql` — admin-editable connector settings (staff-only).
 - `supabase/seed.sql` — optional demo data.
 - **Demo mode:** with no Supabase env, the app never touches Postgres and serves
   `src/services/mock-data.ts`. Every read path must keep this fallback.
@@ -100,6 +101,28 @@ Single-row JSONB store for runtime overrides of the site config.
 
 Read/merged by `src/features/settings/settings.service.ts`; written by
 `updateBusinessSettings()`.
+
+### Agency connector — `agency_connector_settings` (migration 0003)
+
+Single-row store for the deployment's admin-editable connector settings, layered
+**over** the environment (blank ⇒ inherit env / auto-derived id). Only non-secret
+fields; the shared API keys and Agency base URL stay in server-only env. Unlike
+`business_settings` there is **no anon policy** — this operational config is never
+exposed to the public site and is read server-side with the service-role client.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | text PK | default `'default'` — the single-tenant row |
+| `org_id` | uuid, nullable | reserved for multi-tenancy |
+| `enabled` | boolean, nullable | null ⇒ inherit `AGENCY_OS_ENABLED` |
+| `deployment_id` | text, nullable | null ⇒ inherit env, else auto-derived |
+| `organization_id` | text, nullable | null ⇒ inherit `BUSINESS_OS_ORG_ID` |
+| `organization_slug` | text, nullable | null ⇒ inherit `BUSINESS_OS_ORG_SLUG` |
+| `updated_at` | timestamptz | |
+
+Read into the connector's sync config overlay by `src/lib/agency/settings.ts` +
+`settings.loader.ts` (primed at startup / heartbeat / on save); managed by the
+`/admin/agency` panel via `updateConnectorConnection()`.
 
 ---
 

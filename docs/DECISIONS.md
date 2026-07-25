@@ -10,6 +10,37 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0017 — Connector settings are admin-editable, layered over env
+
+**Status:** Accepted.
+
+**Decision.** The connector's **non-secret** settings (the enable flag and the
+deployment/organization identity) become editable at runtime from the Business
+Hub (`/admin/agency`), stored in a new `agency_connector_settings` table
+(migration 0003, staff-only RLS, no anon policy). Config resolves in layers:
+**stored overlay ▹ environment ▹ auto-derived**. `getConnectorConfig()` reads a
+sync in-memory overlay cache (`src/lib/agency/settings.ts`) that the async loader
+(`settings.loader.ts`) primes at startup, on each heartbeat, and after a save —
+so every existing call site picks up edits without becoming async. When no
+deployment id is set anywhere, one is **auto-derived from the Supabase project
+ref**, so a fresh clone self-identifies with zero configuration. Saving re-primes
+and re-announces to Agency OS immediately (no redeploy).
+
+**Context.** Environment variables can't be changed from a UI (they're fixed at
+deploy time), and setting identity per clone by hand was the main per-customer
+chore. The shared secrets (API keys) and Agency base URL are identical fleet-wide
+and belong in the template's env — so the *only* per-customer values are the
+non-secret identity, which is safe to edit in the admin and safe to store in a
+table.
+
+**Consequences.** Onboarding a new customer needs ~no configuration: the template
+carries the shared keys/URL, and identity auto-derives (or is set once in the
+panel). **No secret ever appears in a browser or in a database row.** Trade-off:
+across multiple warm serverless instances a change converges within one heartbeat
+interval rather than instantly; the saving instance updates immediately. The
+connector's founding invariants are unchanged — still observe-only, still fully
+dormant when disabled, still fail-safe (a DB read failure falls back to env).
+
 ## ADR-0016 — Finalized Agency contract: bearer v1 push + read-only pull, observe-only
 
 **Status:** Accepted.

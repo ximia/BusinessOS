@@ -76,8 +76,17 @@ function buildHeartbeat(): HeartbeatPayload {
   });
 }
 
-function tick(): void {
+async function tick(): Promise<void> {
   try {
+    // Converge on admin edits made in the Business Hub: refresh the settings
+    // overlay before reporting, so a paused/renamed deployment reflects within
+    // one interval even on a long-lived (warm) process. Best-effort.
+    try {
+      const { primeConnectorSettings } = await import("./settings.loader");
+      await primeConnectorSettings();
+    } catch {
+      // keep last-known settings
+    }
     sequence += 1;
     const heartbeat = buildHeartbeat();
     publishEvent("deployment.heartbeat", heartbeat);

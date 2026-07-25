@@ -14,6 +14,13 @@
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   try {
+    // Prime the admin-editable settings overlay BEFORE registering, so the
+    // deployment announces itself with the identity set in the Business Hub
+    // (falling back to env / auto-derived when nothing is stored). Best-effort:
+    // on failure the overlay stays empty and env is used.
+    const { primeConnectorSettings } = await import("@/lib/agency/settings.loader");
+    await primeConnectorSettings();
+
     const { ensureRegistered } = await import("@/lib/agency/registration");
     ensureRegistered(); // fire-and-forget; returns immediately.
 

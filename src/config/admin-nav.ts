@@ -8,6 +8,7 @@ import {
   UserCog,
   Settings,
   Palette,
+  RadioTower,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,5 +29,6 @@ export const adminNav: AdminNavItem[] = [
   { label: "Blog", href: "/admin/blog", icon: Newspaper, shortcut: "B" },
   { label: "Employees", href: "/admin/employees", icon: UserCog, shortcut: "E" },
   { label: "Theme", href: "/admin/theme", icon: Palette, shortcut: "T" },
+  { label: "Agency", href: "/admin/agency", icon: RadioTower, shortcut: "A" },
   { label: "Settings", href: "/admin/settings", icon: Settings, shortcut: "S" },
 ];

@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Agency Connection panel (Business Hub → Agency).** A non-technical admin can
+  now manage this deployment's connector from `/admin/agency` instead of editing
+  environment variables and redeploying: switch reporting on/off and set the
+  deployment identity (deployment id, org id/slug). Stored in a new
+  `agency_connector_settings` table (migration `0003`, staff-only RLS, never
+  exposed to the public site) and layered **over** the environment — any blank
+  field inherits the env value, and the deployment id **auto-derives** from the
+  Supabase project ref when unset, so a fresh clone self-identifies with zero
+  setup. Only non-secret fields live here; the shared API keys and Agency base
+  URL stay in server-only env. Saving re-primes the in-process config and
+  re-announces to Agency OS immediately (no redeploy). `SCHEMA_VERSION` → 3.
+  See ADR-0017.
 - **Documentation foundation.** A formal `docs/` system establishing Business OS
   as the master template: `PRODUCT.md`, `ROADMAP.md`, `UI_GUIDELINES.md`,
   `CODING_STANDARDS.md`, `DATABASE.md`, `API.md`, `DECISIONS.md`, `CHANGELOG.md`,
