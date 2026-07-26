@@ -29,6 +29,17 @@ export async function handleAgencyRead<T extends z.ZodTypeAny>(
   dataSchema: T,
   produce: () => z.infer<T> | Promise<z.infer<T>>
 ): Promise<NextResponse> {
+  // Refresh the admin-editable settings overlay from the database so the
+  // enabled/paused state reflects what was last saved, in this route context
+  // (Next.js evaluates modules per-context; without this a fresh route instance
+  // would only see env/auto). Best-effort — falls back to env/auto on failure.
+  try {
+    const { primeConnectorSettings } = await import("../settings.loader");
+    await primeConnectorSettings();
+  } catch {
+    /* fall back to env / auto-on */
+  }
+
   if (!isConnectorEnabled()) return apiDisabled();
   if (!authenticateAgencyRequest(request).ok) return apiUnauthorized();
 

@@ -69,11 +69,26 @@ export function getConnectorConfig(): ConnectorConfig {
   // NULL overlay fields inherit — note `false ?? x === false`, so an admin who
   // switches the connector OFF is respected over an env `enabled=true`.
   const overlay = getConnectorOverlay();
+  const baseUrl = process.env[ENV.BASE_URL] || undefined;
+
+  // Three-state read of the env master switch: unset | truthy | falsy.
+  const rawEnabled = process.env[ENV.ENABLED]?.trim().toLowerCase();
+  const envEnabled =
+    rawEnabled === undefined || rawEnabled === ""
+      ? undefined
+      : ["1", "true", "yes", "on"].includes(rawEnabled);
+
+  // Enabled precedence, so a properly-configured deployment "just connects":
+  //   admin toggle (overlay) > explicit env switch > AUTO-ON when a console URL
+  //   is configured. A standalone clone (no AGENCY_OS_BASE_URL) stays dormant;
+  //   set the URL and it reports by default. Downstream steps still require the
+  //   keys, so auto-on never leaks anything — it only flips the master switch.
+  const enabled = overlay?.enabled ?? envEnabled ?? Boolean(baseUrl);
 
   const raw = {
-    enabled: overlay?.enabled ?? process.env[ENV.ENABLED],
+    enabled,
     // Shared, fleet-wide, and secret-adjacent: always env, never overlaid.
-    agencyBaseUrl: process.env[ENV.BASE_URL] || undefined,
+    agencyBaseUrl: baseUrl,
     deploymentId:
       overlay?.deploymentId ||
       process.env[ENV.DEPLOYMENT_ID] ||
