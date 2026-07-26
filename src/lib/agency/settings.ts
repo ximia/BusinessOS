@@ -18,6 +18,8 @@
  * shared API keys and Agency base URL remain env-only and never pass through here.
  */
 
+import { ref } from "./global-state";
+
 /** The admin-editable, non-secret connector settings. NULL ⇒ inherit env. */
 export interface StoredConnectorSettings {
   enabled: boolean | null;
@@ -26,18 +28,25 @@ export interface StoredConnectorSettings {
   organizationSlug: string | null;
 }
 
-// Module-level cache. Primed at startup (instrumentation) and refreshed after a
-// save or on each heartbeat tick, so a long-lived process converges on edits.
-let overlay: StoredConnectorSettings | null = null;
+// Cache primed at startup (instrumentation) and refreshed after a save or on
+// each heartbeat tick. It MUST live on globalThis: Next.js evaluates modules in
+// separate contexts (the save action, the registration path, the API routes),
+// and a plain module variable would leave each context with its own empty copy
+// — so a toggle saved in one context wouldn't be seen by registration in
+// another. See global-state.ts (ADR-0014). `ref` is pure and edge-safe.
+const overlayRef = ref<StoredConnectorSettings | null>(
+  "settings.connectorOverlay",
+  () => null,
+);
 
 /** The current overlay (null until primed, or when nothing is stored). */
 export function getConnectorOverlay(): StoredConnectorSettings | null {
-  return overlay;
+  return overlayRef.get();
 }
 
 /** Replace the cached overlay. Called by the loader after a DB read. */
 export function setConnectorOverlay(next: StoredConnectorSettings | null): void {
-  overlay = next;
+  overlayRef.set(next);
 }
 
 /**
