@@ -169,19 +169,34 @@ export function ConnectionEditor({
           control={control}
           name="enabled"
           render={({ field }) => (
-            <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                className="size-4 rounded border-input accent-primary"
-              />
-              <span className="text-sm">
-                {field.value
-                  ? "Connected — this deployment reports to Agency OS"
-                  : "Paused — this deployment does not report"}
-              </span>
-            </label>
+            <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+              <div>
+                <p className="text-sm font-medium">Report to Agency OS</p>
+                <p className="text-xs text-muted-foreground">
+                  {field.value
+                    ? "On — this site reports its status to your console."
+                    : "Off — this site runs normally but stays hidden from the console."}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={field.value}
+                onClick={() => field.onChange(!field.value)}
+                className={cn(
+                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
+                  field.value ? "bg-primary" : "bg-muted-foreground/30",
+                )}
+              >
+                <span className="sr-only">Report to Agency OS</span>
+                <span
+                  className={cn(
+                    "inline-block size-5 transform rounded-full bg-white shadow transition-transform",
+                    field.value ? "translate-x-5" : "translate-x-0.5",
+                  )}
+                />
+              </button>
+            </div>
           )}
         />
 

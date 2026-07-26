@@ -58,26 +58,49 @@ export async function updateConnectorConnection(
 
     // Reflect immediately in this process, then act on the new state.
     await primeConnectorSettings();
-    try {
-      const { register } = await import("@/lib/agency/registration");
-      const { startHeartbeat, stopHeartbeat } = await import("@/lib/agency/heartbeat");
-      if (v.enabled) {
-        void register(); // re-announce with the new identity (idempotent)
-        startHeartbeat(); // idempotent; starts if newly enabled + deliverable
-      } else {
+
+    if (!v.enabled) {
+      try {
+        const { stopHeartbeat } = await import("@/lib/agency/heartbeat");
         stopHeartbeat();
+      } catch {
+        /* best-effort */
       }
-    } catch {
-      // Re-announcing is best-effort; the saved settings still stand.
+      revalidatePath("/admin/agency");
+      return { ok: true, message: "Saved. Reporting is off — this site is hidden from Agency OS." };
     }
 
-    revalidatePath("/admin/agency");
-    return {
-      ok: true,
-      message: v.enabled
-        ? "Connection saved. This deployment will report to Agency OS."
-        : "Connection saved. This deployment is paused (not reporting).",
-    };
+    // AWAIT registration so it actually completes inside this request. On
+    // serverless (Vercel) a fire-and-forget register() is killed when the
+    // function freezes, which is why background check-ins are unreliable there.
+    // Doing it here means clicking Save reliably announces the deployment.
+    try {
+      const { register } = await import("@/lib/agency/registration");
+      const { startHeartbeat } = await import("@/lib/agency/heartbeat");
+      const state = await register();
+      startHeartbeat(); // best-effort periodic beat while the instance is warm
+
+      revalidatePath("/admin/agency");
+      if (state.phase === "registered") {
+        return { ok: true, message: "Connected — registered with Agency OS." };
+      }
+      if (state.phase === "failed") {
+        return {
+          ok: true,
+          message: `Saved, but couldn't reach Agency OS${state.lastError ? `: ${state.lastError}` : ""}. Check the keys match, then save again.`,
+        };
+      }
+      return {
+        ok: true,
+        message: `Saved, but reporting isn't fully configured${state.skipReason ? `: ${state.skipReason}` : ""}.`,
+      };
+    } catch (regErr) {
+      revalidatePath("/admin/agency");
+      return {
+        ok: true,
+        message: `Saved. Registration attempt errored${regErr instanceof Error ? `: ${regErr.message}` : ""}.`,
+      };
+    }
   } catch (err) {
     console.error("[agency-connection] save failed", err);
     return { ok: false, message: "Couldn't save. Please try again." };
