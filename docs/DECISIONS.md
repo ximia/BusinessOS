@@ -10,6 +10,28 @@ decision, the context, and the consequences.
 
 ---
 
+## ADR-0018 — Inbound command channel (one whitelisted mutating endpoint)
+
+**Status:** Accepted.
+
+**Decision.** Expose exactly one inbound *mutating* endpoint,
+`POST /api/agency/v1/command`, so Agency OS can control this deployment. It is
+authenticated with the same per-deployment bearer key as the read API, and is a
+fixed whitelist only: `ping`, `connector.pause`/`resume`, `cache.revalidate`,
+`self-test`, `maintenance.on`/`off`. No arbitrary code or SQL is ever accepted.
+It deliberately does NOT gate on the connector being enabled, so `resume` works
+while paused. Maintenance is a fail-safe boolean (migration 0004) that gates the
+marketing layout; any read error defaults to "not in maintenance" so the site
+can never be taken down by a glitch. Handlers live in `src/lib/agency/commands.ts`.
+
+**Context.** The connector was observe-only (ADR-0005/0016). The operator needs
+real control (pause a noisy site, refresh content, put a site into maintenance).
+This reverses observe-only for a bounded, reversible set — not a general command bus.
+
+**Consequences.** Real console→site control with the smallest possible surface:
+every command is explicit, reversible, authenticated, and logged on the Agency
+side. Broader control (config push, arbitrary operations) stays out of scope.
+
 ## ADR-0017 — Connector settings are admin-editable, layered over env
 
 **Status:** Accepted.

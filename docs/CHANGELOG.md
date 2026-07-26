@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Agency command channel (inbound control).** One authenticated, whitelisted
+  mutating endpoint `POST /api/agency/v1/command` lets Agency OS act on this
+  deployment: `connector.pause`/`resume`, `cache.revalidate`, `self-test`,
+  `maintenance.on`/`off` (plus `ping`). No arbitrary code/SQL. Maintenance is a
+  fail-safe flag (migration `0004`, default false) gating the marketing layout —
+  any read error keeps the site up. `SCHEMA_VERSION` → 4. See ADR-0018.
 - **Agency Connection panel (Business Hub → Agency).** A non-technical admin can
   now manage this deployment's connector from `/admin/agency` instead of editing
   environment variables and redeploying: switch reporting on/off and set the

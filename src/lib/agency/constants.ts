@@ -21,7 +21,7 @@ export const APP_VERSION = "1.0.0";
  * Bump this whenever a new migration ships. Lets Agency OS know a deployment's
  * schema shape without ever touching its database.
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * The version of the *connector contract* — the shape of the health, version,
