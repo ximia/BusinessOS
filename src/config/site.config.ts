@@ -1,4 +1,5 @@
 import type { SiteConfig } from "@/types/content";
+import { applyBusinessProfile } from "@/config/business-profile";
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
@@ -16,7 +17,7 @@ import type { SiteConfig } from "@/types/content";
  *  Team:             src/config/team.config.ts
  * ─────────────────────────────────────────────────────────────────────────────
  */
-export const siteConfig: SiteConfig = {
+const demoSiteConfig: SiteConfig = {
   companyName: "Halcyon Detailing Co.",
   legalName: "Halcyon Detailing LLC",
   tagline: "Concours-level detailing, brought to your driveway.",
@@ -165,3 +166,11 @@ export const siteConfig: SiteConfig = {
     linkLabel: "Reserve a spot",
   },
 };
+
+/**
+ * The effective site config: the demo defaults above, overlaid with this
+ * client's identity + industry preset when Agency OS has provisioned the site
+ * (via `NEXT_PUBLIC_BUSINESS_*` env vars). With none set, this is exactly the
+ * demo config — demo mode is never broken.
+ */
+export const siteConfig: SiteConfig = applyBusinessProfile(demoSiteConfig);

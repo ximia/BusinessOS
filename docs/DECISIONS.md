@@ -353,6 +353,32 @@ automatically. Multi-tenancy remains optional and future (ADR-0004).
 
 ---
 
+## ADR-0006 — Provisioned identity is an env overlay on the config, not seeded data
+**Status:** Accepted · 2026-07
+
+**Context:** When Agency OS provisions a clone we want it to come up branded for
+that client (name, contact, trade-specific services, colors) without editing code
+or seeding the empty client database at provision time.
+
+**Decision:** Carry the client's identity as `NEXT_PUBLIC_BUSINESS_*` environment
+variables injected at deploy time, and overlay them onto the compile-time demo
+config in `src/config/business-profile.ts`. Precedence is **explicit env >
+industry preset > demo default**. The industry preset reuses the existing Theme
+Generator registry (`features/theme/industries.ts`) as the single source of trade
+palettes/copy/sample services — no parallel list. The overlay is applied once, at
+the config source (`site.config.ts`, `services.config.ts`), so both direct
+`siteConfig` importers and `useSettings()` consumers get branded values, and the
+Business Settings deep-merge still layers runtime edits on top.
+
+**Consequences:** Branding works on the very first deploy with nothing to seed,
+and a client can still refine everything later in Admin → Settings/Theme. With no
+env set the site is exactly the demo (demo mode preserved — rule 2). Address
+coordinates/map are intentionally left for the owner to set in Admin (we don't
+geocode). The env-var names are a contract shared with Agency OS; see
+`docs/API.md`.
+
+---
+
 ## ADR-0005 — Future Agency OS communication via versioned APIs + webhooks
 **Status:** Accepted (design intent) · 2026-07
 

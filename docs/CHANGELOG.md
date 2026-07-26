@@ -15,6 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Auto-branding from provisioning (`NEXT_PUBLIC_BUSINESS_*`).** A freshly
+  cloned site now renders as *that client's* business without code edits. Agency
+  OS injects the client's identity as environment variables at deploy time and
+  `src/config/business-profile.ts` overlays them onto the demo config: an
+  industry **preset** (`NEXT_PUBLIC_BUSINESS_PRESET`, e.g. `hvac`) swaps in a
+  matching color palette, tagline, description, trust badges, and a starter set
+  of services (reusing the Theme Generator registry in
+  `features/theme/industries.ts`), then explicit fields (name, phone, email,
+  address, …) override on top. Services nav/footer links are rebuilt from the
+  active services so they resolve. With no env set, the site is byte-for-byte the
+  detailing demo — demo mode is untouched. See ADR-0006.
 - **Agency command channel (inbound control).** One authenticated, whitelisted
   mutating endpoint `POST /api/agency/v1/command` lets Agency OS act on this
   deployment: `connector.pause`/`resume`, `cache.revalidate`, `self-test`,

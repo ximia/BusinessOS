@@ -1,10 +1,15 @@
 import type { Service } from "@/types/content";
+import { resolveServices } from "@/config/business-profile";
 
 /**
  * Services power the homepage grid, the /services index, and each
  * /services/[slug] detail page. Order here is the order shown on the site.
+ *
+ * `demoServices` is the auto-detailing demo set. When Agency OS provisions this
+ * site with an industry preset, `resolveServices` swaps in that trade's starter
+ * services instead (see `config/business-profile.ts`).
  */
-export const services: Service[] = [
+const demoServices: Service[] = [
   {
     slug: "interior-detail",
     title: "Interior Detail",
@@ -134,6 +139,9 @@ export const services: Service[] = [
       "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80",
   },
 ];
+
+/** The services this site renders — demo set, or the provisioned trade's set. */
+export const services: Service[] = resolveServices(demoServices);
 
 export function getServiceBySlug(slug: string): Service | undefined {
   return services.find((s) => s.slug === slug);

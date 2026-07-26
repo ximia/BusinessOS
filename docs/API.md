@@ -153,6 +153,29 @@ The capability flags in `/capabilities` now reflect what is built:
 
 ---
 
+## 2a-3. Provisioning identity — `NEXT_PUBLIC_BUSINESS_*` (inbound env contract)
+
+When Agency OS provisions a clone it injects the client's identity as environment
+variables at deploy time; `src/config/business-profile.ts` overlays them onto the
+demo config (ADR-0006). This is a **contract shared with Agency OS** — the names
+must match on both sides. All are optional; any unset value falls back to the
+industry preset, then the demo default. `NEXT_PUBLIC_` so they reach client
+components (they are non-secret identity, never keys).
+
+| Variable | Overlays | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_BUSINESS_NAME` | company/legal name, logo alt, SEO title | |
+| `NEXT_PUBLIC_BUSINESS_PRESET` | palette + tagline/description + trust badges + starter services | must be an `industryPresets` id (e.g. `hvac`, `roofing`, `nail-salon`) |
+| `NEXT_PUBLIC_BUSINESS_INDUSTRY` | industry label | defaults to the preset's label |
+| `NEXT_PUBLIC_BUSINESS_TAGLINE` | hero headline | defaults to the preset's sample |
+| `NEXT_PUBLIC_BUSINESS_DESCRIPTION` | hero + meta description | defaults to the preset's sample |
+| `NEXT_PUBLIC_BUSINESS_PHONE` | phone (+ derived `tel:` E.164) | |
+| `NEXT_PUBLIC_BUSINESS_EMAIL` | contact email | |
+| `NEXT_PUBLIC_BUSINESS_STREET` / `_CITY` / `_STATE` / `_ZIP` | address text | map coordinates are left for Admin → Settings |
+| `NEXT_PUBLIC_BUSINESS_PRIMARY_HSL` | brand `--primary` (HSL triple) | overrides the preset color |
+
+With none set, the overlay is a no-op and the site is the detailing demo.
+
 ## 2b. Outbound self-registration (implemented)
 
 The **first outbound call** in the codebase. On server start, a deployment
