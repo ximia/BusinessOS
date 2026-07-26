@@ -40,11 +40,22 @@ async function performRegistration(): Promise<RegistrationState> {
     });
   }
 
+  // Resolve the business's display name (from admin-edited settings, falling
+  // back to the compile-time default) so Agency OS can name the auto-created
+  // client. Best-effort — a failure just omits the name.
+  let businessName: string | null = null;
+  try {
+    const { getSiteConfig } = await import("@/features/settings/settings.service");
+    businessName = (await getSiteConfig()).companyName ?? null;
+  } catch {
+    /* name is optional */
+  }
+
   // Build + hash the payload.
   let payload;
   let payloadHash: string;
   try {
-    payload = buildRegistrationPayload(getConnectorConfig());
+    payload = buildRegistrationPayload(getConnectorConfig(), businessName);
     payloadHash = hashPayload(payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : "invalid payload";

@@ -20,6 +20,8 @@ import {
  */
 export const registrationPayloadSchema = z.object({
   contractVersion: z.string().min(1),
+  /** Human display name (the business's own name) for the agency's client list. */
+  businessName: z.string().min(1).nullable(),
   deployment: z.object({
     id: z.string().min(1),
     environment: deploymentEnvironmentSchema,
@@ -44,11 +46,13 @@ function resolvePublicUrl(): string | null {
 
 /** Build a validated registration payload from the connector's state. */
 export function buildRegistrationPayload(
-  config: ConnectorConfig = getConnectorConfig()
+  config: ConnectorConfig = getConnectorConfig(),
+  businessName: string | null = null
 ): RegistrationPayload {
   const identity = getConnectorIdentity(config);
   return registrationPayloadSchema.parse({
     contractVersion: CONNECTOR_CONTRACT_VERSION,
+    businessName: businessName?.trim() || null,
     deployment: {
       id: identity.deployment.id,
       environment: identity.deployment.environment,
